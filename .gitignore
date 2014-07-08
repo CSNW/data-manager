@@ -1,0 +1,11 @@
+node_modules
+bower_components
+.grunt
+specs/index.html
+npm-debug.log
+
+# OS Junk
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

@@ -1,0 +1,41 @@
+{
+  "name": "dataManager",
+  "main": "dataManager.js",
+  "version": "0.5.0",
+  "homepage": "https://github.com/CSNW/data-manager",
+  "authors": [
+    "CSNW",
+    "Tim Hall <tim.hall.engr@gmail.com>"
+  ],
+  "description": "Advanced querying and processing for csv data",
+  "keywords": [
+    "dataManager",
+    "data",
+    "manager",
+    "store",
+    "query",
+    "d3"
+  ],
+  "private": true,
+  "dependencies": {
+    "rsvp": "~3.0.6",
+    "underscore": "~1.6.0",
+    "d3": "~3.4.8"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "jquery": "~2.1.0",
+    "jasmine-jquery": "~2.0.3"
+  },
+  "ignore": [
+    "src",
+    "specs",
+    "example",
+    "tasks",
+    "package.json",
+    "Gruntfile.js",
+    ".gitattributes",
+    ".gitignore",
+    ".jshintrc"
+  ]
+}
