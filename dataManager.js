@@ -652,12 +652,12 @@
         }
 
         function afterPostProcessing(processed) {
-          log.timeEnd(id + ':postprocess');
           if (!_.isUndefined(processed)) {
             _.each(processed, function(values, index) {
               results[index].values = values;
             });
           }
+          log.timeEnd(id + ':postprocess');
 
           // 7. series
           log.time(id + ':series');
@@ -704,6 +704,10 @@
         return [{meta: {}, values: rows}];
       }
       else {
+        var grouped = {};
+        var meta = {};
+
+        // Convert String -> Array -> Object format for groupBy
         if (_.isString(groupBy)) {
           groupBy = [groupBy];
         }
@@ -715,27 +719,35 @@
           }));
         }
 
-        var grouped = [];
-        _.each(rows, function(row, index, rows) {
-          // Determine meta for row
-          var meta = {};
-          _.each(groupBy, function(group, key) {
-            meta[key] = group(row, index, rows);
-          });
-
-          // Find group by meta (create if not found)
-          var group = _.find(grouped, function(group) {
-            return _.isEqual(group.meta, meta);
-          });
-          if (!group) {
-            group = {meta: meta, values: []};
-            grouped.push(group);
-          }
-
-          // Add row to group
-          group.values.push(row);
+        // Convert groupBy to arrays for quick iteration
+        var keys = [];
+        var values = [];
+        _.each(groupBy, function(value, key) {
+          keys.push(key);
+          values.push(value);
         });
 
+        _.each(rows, function(row, index, rows) {
+          var key = quickKey(row, keys, values);
+          if (!meta[key]) {
+            meta[key] = _.object(keys, _.map(keys, function(key, index) {
+              return values[index](row);
+            }));
+
+            grouped[key] = [];
+          }
+
+          grouped[key].push(row);
+        });
+
+        // Convert to [{meta: {...}, values: [...]}] format
+        grouped = _.map(grouped, function(rows, key) {
+          return {
+            meta: meta[key],
+            values: rows
+          };
+        });
+        
         return grouped;
       }
     },
@@ -877,6 +889,7 @@
 
       // If query is given for row key, match recursively with lookup
       // otherwise compare with equals
+      // TODO Not too slow, but look into non-recursive approach
       var isQuery = _.isObject(item) && !(item instanceof Date) && !_.isArray(item);
       if (isQuery) return matcher(item, row, key);
       else return _.isEqual(resolve(row, key), item);
@@ -955,16 +968,15 @@
   };
   log.enable = false;
   log.error = function() {
-    if (log.enable) {
-      var args = _.toArray(arguments);
-      args.unshift('data-manager:');
-      if (_.isFunction(console.error)) {
-        console.error.apply(console, args);
-      }
-      else {
-        args.splice(1, 0, 'ERROR');
-        console.log.apply(console, args);
-      }        
+    // Always show error logs
+    var args = _.toArray(arguments);
+    args.unshift('data-manager:');
+    if (_.isFunction(console.error)) {
+      console.error.apply(console, args);
+    }
+    else {
+      args.splice(1, 0, 'ERROR');
+      console.log.apply(console, args);
     }
   };
   log.time = function(id) {
@@ -975,5 +987,17 @@
     if (log.enable && _.isFunction(console.timeEnd))
       console.timeEnd('data-manager: ' + id);
   };
+
+  // Create a key for groupBy using key:value format
+  function quickKey(row, keys, values) {
+    var key = '';
+    for (var i = 0, l = keys.length; i < l; i++) {
+      if (key.length > 0)
+        key += '&';
+
+      key += keys[i] + ':' + values[i](row);
+    }
+    return key;
+  }
 
 })(_, RSVP, d3, this);
