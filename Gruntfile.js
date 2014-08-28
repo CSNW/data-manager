@@ -25,13 +25,6 @@ module.exports = function(grunt) {
   grunt.loadTasks('tasks');
   this.registerTask('default', ['test']);
   
-  this.registerTask('release', 'Builds a new release of the library', [
-    'test',
-    'uglify',
-    'jshint:build',
-    'jasmine:build'
-  ]);
-  
   this.registerTask('test', 'Lint and run specs', [
     'jshint:src',
     'jshint:specs', 
