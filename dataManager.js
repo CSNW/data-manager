@@ -34,6 +34,12 @@
     'Date': function(value) { return new Date(value); }
   };
 
+  var uniqueIds = {
+    load: 1,
+    _load: 1,
+    calculate: 1
+  };
+
   _.extend(Store.prototype, {
     /**
       Load current data in store (sync)
@@ -74,6 +80,9 @@
       @return {Promise}
     */
     load: function load(path, options) {
+      var id = 'Store#load.' + uniqueIds.load++;
+      log.time(id);
+
       var paths = _.isArray(path) ? path : [path];
       
       // Generate _cast and _map
@@ -96,6 +105,7 @@
         .catch(this._errorLoading.bind(this, paths, options))
         .finally(function() {
           this.loading = _.without(this.loading, loading);
+          log.timeEnd(id);
         }.bind(this));
 
       // Add to loading (treat this.loading as immutable array)
@@ -225,9 +235,11 @@
 
     // Process all data
     _process: function _process() {
+      log.time('Store#_process');
       _.each(this.cache(), function(cache, path) {
         cache.values = this._processRows(cache.raw, cache.meta);
       }, this);
+      log.timeEnd('Store#_process');
     },
 
     // Process given rows
@@ -368,16 +380,23 @@
       var cache = this.cache(path);
 
       if (cache.meta.loaded) {
-        return new RSVP.Promise(function(resolve) { resolve(cache.raw); });
+        log('Store#_load(' + path + ') -> from cache');  
+        return new RSVP.Promise(function(resolve) { 
+          resolve(cache.raw); 
+        });
       }
       else if (cache.meta.loading) {
         return cache.meta.loading;
       }
       else {
+        var id = 'Store#_load.' + uniqueIds._load++;
+        log.time(id);
+
         var loading = this._loadCsv(path).then(function(values) {
           cache.meta.loaded = new Date();
           return values;
         }).finally(function() {
+          log.timeEnd(id);
           delete cache.meta.loading;
         });
 
@@ -398,26 +417,34 @@
 
     // Handle loading finished (successfully)
     _doneLoading: function _doneLoading(paths, options, rows) {
+      log.time('_doneLoading');
       // Process rows for each path
       _.each(paths, function(path, index) {
         var cache = this.cache(path);
 
-        // Store options
-        _.extend(cache.meta, options);
+        // Only update if new values or new cast / map
+        if (cache.raw.length != rows[index].length || options.cast || options.map) {
+          // Store options
+          _.extend(cache.meta, options);
 
-        // Store raw rows
-        cache.raw = rows[index];
+          // Store raw rows
+          cache.raw = rows[index];
 
-        // Store processed rows
-        cache.values = this._processRows(rows[index], cache.meta);
+          // Store processed rows
+          log.time('_process');
+          cache.values = this._processRows(rows[index], cache.meta);
+          log.timeEnd('_process');
+        }
       }, this);
 
       this._notify('load');
+      log.timeEnd('_doneLoading');
       return this.cache();
     },
 
     // Handle loading error
     _errorLoading: function _errorLoading(paths, options, err) {
+      log.error(err, {paths: paths, options: options});
       this.errors.push({paths: paths, options: options, error: err});
     }
   });
@@ -551,11 +578,15 @@
       @return {Promise}
     */
     calculate: function calculate() {
+      var id = 'Query#calculate.' + uniqueIds.calculate++;
+      log.time(id);
+
       var query = this._query;
       var from = (_.isString(query.from) ? [query.from] : query.from) || [];
 
       this.calculating = this.store.load(from).then(function(data) {
         // 1. from
+        log.time(id + ':from');
         var rows = _.reduce(data, function(memo, cache, filename) {
           if (!from.length || _.contains(from, filename)) {
             return memo.concat(cache.values);
@@ -564,13 +595,17 @@
             return memo;
           }
         }, []);
+        log.timeEnd(id + ':from');
 
         // 2. preprocess
+        log.time(id + ':preprocess');
         if (_.isFunction(query.preprocess)) {
           rows = query.preprocess(rows);
         }
+        log.timeEnd(id + ':preprocess');
 
         // 3. filter
+        log.time(id + ':filter');
         if (query.filter) {
           if (_.isFunction(query.filter)) {
             rows = _.filter(rows, query.filter);
@@ -581,14 +616,20 @@
             });
           }
         }
+        log.timeEnd(id + ':filter');
 
         // 4. groupBy
+        log.time(id + ':groupBy');
         var results = this._groupBy(rows, query.groupBy);
+        log.timeEnd(id + ':groupBy');
 
         // 5. reduce
+        log.time(id + ':reduce');
         results = this._reduce(results, query.reduce);
+        log.timeEnd(id + ':reduce');
 
         // 6. postprocess
+        log.time(id + ':postprocess');
         if (_.isFunction(query.postprocess)) {
           var processed = _.map(results, function(result) {
             return query.postprocess(result.values, result.meta);
@@ -616,15 +657,20 @@
               results[index].values = values;
             });
           }
+          log.timeEnd(id + ':postprocess');
 
           // 7. series
+          log.time(id + ':series');
           results = this._series(results, query.series);
+          log.timeEnd(id + ':series');
 
           // Remove calculating
           delete this.calculating;
 
           // Store and return values
           this._values = results;
+
+          log.timeEnd(id);
           return this._values;
         }
       }.bind(this));
@@ -658,6 +704,10 @@
         return [{meta: {}, values: rows}];
       }
       else {
+        var grouped = {};
+        var meta = {};
+
+        // Convert String -> Array -> Object format for groupBy
         if (_.isString(groupBy)) {
           groupBy = [groupBy];
         }
@@ -669,27 +719,35 @@
           }));
         }
 
-        var grouped = [];
-        _.each(rows, function(row, index, rows) {
-          // Determine meta for row
-          var meta = {};
-          _.each(groupBy, function(group, key) {
-            meta[key] = group(row, index, rows);
-          });
-
-          // Find group by meta (create if not found)
-          var group = _.find(grouped, function(group) {
-            return _.isEqual(group.meta, meta);
-          });
-          if (!group) {
-            group = {meta: meta, values: []};
-            grouped.push(group);
-          }
-
-          // Add row to group
-          group.values.push(row);
+        // Convert groupBy to arrays for quick iteration
+        var keys = [];
+        var values = [];
+        _.each(groupBy, function(value, key) {
+          keys.push(key);
+          values.push(value);
         });
 
+        _.each(rows, function(row, index, rows) {
+          var key = quickKey(row, keys, values);
+          if (!meta[key]) {
+            meta[key] = _.object(keys, _.map(keys, function(key, index) {
+              return values[index](row);
+            }));
+
+            grouped[key] = [];
+          }
+
+          grouped[key].push(row);
+        });
+
+        // Convert to [{meta: {...}, values: [...]}] format
+        grouped = _.map(grouped, function(rows, key) {
+          return {
+            meta: meta[key],
+            values: rows
+          };
+        });
+        
         return grouped;
       }
     },
@@ -831,6 +889,7 @@
 
       // If query is given for row key, match recursively with lookup
       // otherwise compare with equals
+      // TODO Not too slow, but look into non-recursive approach
       var isQuery = _.isObject(item) && !(item instanceof Date) && !_.isArray(item);
       if (isQuery) return matcher(item, row, key);
       else return _.isEqual(resolve(row, key), item);
@@ -898,5 +957,47 @@
       return memo && memo[part];
     }, row);
   };
+
+  // Logging helpers
+  var log = dataManager.log = function log() {
+    if (log.enable) {
+      var args = _.toArray(arguments);
+      args.unshift('data-manager:');
+      console.log.apply(console, args);
+    }
+  };
+  log.enable = false;
+  log.error = function() {
+    // Always show error logs
+    var args = _.toArray(arguments);
+    args.unshift('data-manager:');
+    if (_.isFunction(console.error)) {
+      console.error.apply(console, args);
+    }
+    else {
+      args.splice(1, 0, 'ERROR');
+      console.log.apply(console, args);
+    }
+  };
+  log.time = function(id) {
+    if (log.enable && _.isFunction(console.time))
+      console.time('data-manager: ' + id);
+  };
+  log.timeEnd = function(id) {
+    if (log.enable && _.isFunction(console.timeEnd))
+      console.timeEnd('data-manager: ' + id);
+  };
+
+  // Create a key for groupBy using key:value format
+  function quickKey(row, keys, values) {
+    var key = '';
+    for (var i = 0, l = keys.length; i < l; i++) {
+      if (key.length > 0)
+        key += '&';
+
+      key += keys[i] + ':' + values[i](row);
+    }
+    return key;
+  }
 
 })(_, RSVP, d3, this);
