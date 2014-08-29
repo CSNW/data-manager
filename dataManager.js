@@ -12,6 +12,7 @@
     this.subscriptions = [];
     this.loading = [];
     this.errors = [];
+    this.loaded = false;
 
     // Initialize data cache
     this._cache = {};
@@ -102,9 +103,12 @@
       // 4. Finally remove
       loading = loading
         .then(this._doneLoading.bind(this, paths, options))
-        .catch(this._errorLoading.bind(this, paths, options))
+        .catch(function(err) {
+          this._error({from: 'Store#load', error: err, paths: paths, options: options});
+        }.bind(this))
         .finally(function() {
           this.loading = _.without(this.loading, loading);
+          this.loaded = true;
           log.timeEnd(id);
         }.bind(this));
 
@@ -126,7 +130,7 @@
       var subscription = new Subscription(callback, context);
       this.subscriptions.push(subscription);
 
-      if (!this.loading.length) {
+      if (!this.loading.length && this.loaded) {
         subscription.trigger(this.cache(), {name: 'existing', store: this});
       }
 
@@ -417,7 +421,6 @@
 
     // Handle loading finished (successfully)
     _doneLoading: function _doneLoading(paths, options, rows) {
-      log.time('_doneLoading');
       // Process rows for each path
       _.each(paths, function(path, index) {
         var cache = this.cache(path);
@@ -438,14 +441,13 @@
       }, this);
 
       this._notify('load');
-      log.timeEnd('_doneLoading');
       return this.cache();
     },
 
-    // Handle loading error
-    _errorLoading: function _errorLoading(paths, options, err) {
-      log.error(err, {paths: paths, options: options});
-      this.errors.push({paths: paths, options: options, error: err});
+    // Handle errors
+    _error: function(info) {
+      log.error(info);
+      this.errors.push(info);
     }
   });
 
@@ -505,10 +507,8 @@
     // Subscribe to store changes and recalculate on change
     this._subscription = this.store.subscribe(function() {
       if (this.calculating) return;
-
-      this.calculate().then(function() {
-        this._notify('calculated');  
-      }.bind(this));
+      
+      this.calculate();
     }, this);
   };
 
@@ -538,7 +538,7 @@
       var subscription = new Subscription(callback, context);
       this.subscriptions.push(subscription);
 
-      if (!this.calculating) {
+      if (!this.calculating && this.store.loaded) {
         subscription.trigger(this._values, {name: name, store: this.store, query: this});
       }
 
@@ -552,15 +552,7 @@
     */
     update: function update(query) {
       this._query = query;
-
-      if (this.calculating) {
-        console.log(':/ need to intercept calculating...');
-      }
-      else {
-        this.calculate().then(function() {
-          this._notify('calculated');  
-        }.bind(this));
-      }
+      this.calculate();
     },
 
     /**
@@ -584,96 +576,113 @@
       var query = this._query;
       var from = (_.isString(query.from) ? [query.from] : query.from) || [];
 
-      this.calculating = this.store.load(from).then(function(data) {
-        // 1. from
-        log.time(id + ':from');
-        var rows = _.reduce(data, function(memo, cache, filename) {
-          if (!from.length || _.contains(from, filename)) {
-            return memo.concat(cache.values);
-          }
-          else {
-            return memo;
-          }
-        }, []);
-        log.timeEnd(id + ':from');
+      // Cancel any existing calculations
+      if (this.calculating) {
+        this.calculating.cancelled = true;
+      }
 
-        // 2. preprocess
-        log.time(id + ':preprocess');
-        if (_.isFunction(query.preprocess)) {
-          rows = query.preprocess(rows);
-        }
-        log.timeEnd(id + ':preprocess');
+      var calculation = this.calculating = this.store.load(from)
+        .then(function(data) {
+          // 1. from
+          log.time(id + ':from');
+          var rows = _.reduce(data, function(memo, cache, filename) {
+            if (!from.length || _.contains(from, filename)) {
+              return memo.concat(cache.values);
+            }
+            else {
+              return memo;
+            }
+          }, []);
+          log.timeEnd(id + ':from');
 
-        // 3. filter
-        log.time(id + ':filter');
-        if (query.filter) {
-          if (_.isFunction(query.filter)) {
-            rows = _.filter(rows, query.filter);
+          // 2. preprocess
+          log.time(id + ':preprocess');
+          if (_.isFunction(query.preprocess)) {
+            rows = query.preprocess(rows);
           }
-          else {
-            rows = _.filter(rows, function(row) {
-              return matcher(query.filter, row);
+          log.timeEnd(id + ':preprocess');
+
+          // 3. filter
+          log.time(id + ':filter');
+          if (query.filter) {
+            if (_.isFunction(query.filter)) {
+              rows = _.filter(rows, query.filter);
+            }
+            else {
+              rows = _.filter(rows, function(row) {
+                return matcher(query.filter, row);
+              });
+            }
+          }
+          log.timeEnd(id + ':filter');
+
+          // 4. groupBy
+          log.time(id + ':groupBy');
+          var results = this._groupBy(rows, query.groupBy);
+          log.timeEnd(id + ':groupBy');
+
+          // 5. reduce
+          log.time(id + ':reduce');
+          results = this._reduce(results, query.reduce);
+          log.timeEnd(id + ':reduce');
+
+          // 6. postprocess
+          log.time(id + ':postprocess');
+          if (_.isFunction(query.postprocess)) {
+            var processed = _.map(results, function(result) {
+              return query.postprocess(result.values, result.meta);
             });
+
+            if (processed[0] instanceof RSVP.Promise) {
+              // postprocess returned promises, wait for them to complete
+              return RSVP.all(processed).then(afterPostProcessing.bind(this));
+            }
+            else if (_.isUndefined(processed[0])) {
+              // Assume, return not called from processed and values were changed directly
+              return afterPostProcessing.call(this);
+            }
+            else {
+              return afterPostProcessing.call(this, processed);
+            }
           }
-        }
-        log.timeEnd(id + ':filter');
-
-        // 4. groupBy
-        log.time(id + ':groupBy');
-        var results = this._groupBy(rows, query.groupBy);
-        log.timeEnd(id + ':groupBy');
-
-        // 5. reduce
-        log.time(id + ':reduce');
-        results = this._reduce(results, query.reduce);
-        log.timeEnd(id + ':reduce');
-
-        // 6. postprocess
-        log.time(id + ':postprocess');
-        if (_.isFunction(query.postprocess)) {
-          var processed = _.map(results, function(result) {
-            return query.postprocess(result.values, result.meta);
-          });
-
-          if (processed[0] instanceof RSVP.Promise) {
-            // postprocess returned promises, wait for them to complete
-            return RSVP.all(processed).then(afterPostProcessing.bind(this));
-          }
-          else if (_.isUndefined(processed[0])) {
-            // Assume, return not called from processed and values were changed directly
+          else {
             return afterPostProcessing.call(this);
           }
-          else {
-            return afterPostProcessing.call(this, processed);
+
+          function afterPostProcessing(processed) {
+            if (!_.isUndefined(processed)) {
+              _.each(processed, function(values, index) {
+                results[index].values = values;
+              });
+            }
+            log.timeEnd(id + ':postprocess');
+
+            // 7. series
+            log.time(id + ':series');
+            results = this._series(results, query.series);
+            log.timeEnd(id + ':series');
+
+            log.timeEnd(id);
+            return results;
           }
-        }
-        else {
-          return afterPostProcessing.call(this);
-        }
+        }.bind(this))
+        .then(function(results) {
+          if (!calculation.cancelled) {
+            // Store values
+            this._values = results;
 
-        function afterPostProcessing(processed) {
-          if (!_.isUndefined(processed)) {
-            _.each(processed, function(values, index) {
-              results[index].values = values;
-            });
+            // Notify subscribers
+            this._notify('calculated');
           }
-          log.timeEnd(id + ':postprocess');
-
-          // 7. series
-          log.time(id + ':series');
-          results = this._series(results, query.series);
-          log.timeEnd(id + ':series');
-
-          // Remove calculating
-          delete this.calculating;
-
-          // Store and return values
-          this._values = results;
-
-          log.timeEnd(id);
-          return this._values;
-        }
-      }.bind(this));
+        }.bind(this))
+        .catch(function(err) {
+          this.store._error({from: 'Query#calculate', error: err, query: this});
+        }.bind(this))
+        .finally(function(results) {
+          if (!calculation.cancelled) {
+            delete this.calculating;
+          }
+        });
 
       return this.calculating;
     },
