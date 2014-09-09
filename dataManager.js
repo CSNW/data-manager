@@ -682,7 +682,7 @@
           if (!calculation.cancelled) {
             delete this.calculating;
           }
-        });
+        }.bind(this));
 
       return this.calculating;
     },
