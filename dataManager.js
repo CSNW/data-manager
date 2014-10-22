@@ -396,12 +396,8 @@
         var id = 'Store#_load.' + uniqueIds._load++;
         log.time(id);
 
-        var loading = this._loadCsv(path).then(function(values) {
-          cache.meta.loaded = new Date();
-          return values;
-        }).finally(function() {
+        var loading = this._loadCsv(path).finally(function() {
           log.timeEnd(id);
-          delete cache.meta.loading;
         });
 
         cache.meta.loading = loading;
@@ -437,7 +433,11 @@
           log.time('_process');
           cache.values = this._processRows(rows[index], cache.meta);
           log.timeEnd('_process');
+
+          cache.meta.loaded = new Date();
         }
+
+        delete cache.meta.loading;
       }, this);
 
       this._notify('load');
