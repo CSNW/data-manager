@@ -252,8 +252,8 @@
       var mapFn = (options && options._map) || this._map.bind(this, options.filename);
 
       // Cast and map rows
-      var cast = _.flatten(_.map(rows, castFn, this), true);
-      var mapped = _.flatten(_.map(cast, mapFn, this), true);
+      var cast = _.compact(_.flatten(_.map(rows, castFn, this), true));
+      var mapped = _.compact(_.flatten(_.map(cast, mapFn, this), true));
 
       return mapped;
     },
@@ -816,6 +816,7 @@
       @return {Array}
     */
     _series: function(results, series) {
+      // TODO, don't put values directly on the series object (clone first)
       if (!series) {
         // Create series defaults
         _.each(results, function(result, index) {
