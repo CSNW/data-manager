@@ -828,7 +828,7 @@
         });
       }
       else {
-        if (_.isObject(series)) {
+        if (!_.isArray(series)) {
           _.each(series, function(series_values, key) {
             series[key] = _.map(series_values, createSeries);
           });
