@@ -342,8 +342,28 @@
       resolve(store.cache);
     });
 
-    this._query = query;
-    this.calculate();
+    if (query) {
+      // Steps:
+      // 1. from
+      // 2. preprocess (rows)
+      // 3. filter
+      // 4. groupBy
+      // 5. reduce
+      // 6. postprocess (meta, values)
+      // 7. series
+      this
+        .from(query.from)
+        .then(function(data) {
+          // Return merged rows
+          return _.flatten(_.pluck(_.values(data), 'values'));
+        })
+        .preprocess(query.preprocess)
+        .filter(query.filter)
+        .groupBy(query.groupBy)
+        .reduce(query.reduce)
+        .postprocess(query.postprocess)
+        .series(query.series);
+    }
   };
 
   Query.prototype ={
@@ -564,37 +584,6 @@
           return series;
         }
       });
-    },
-
-    /**
-      Calculate results of query
-
-      Steps:
-      1. from
-      2. preprocess (rows)
-      3. filter
-      4. groupBy
-      5. reduce
-      6. postprocess (meta, values)
-      7. series
-
-      @return {Promise}
-    */
-    calculate: function calculate() {
-      var query = this._query;
-
-      return this
-        .from(query.from)
-        .then(function(data) {
-          // Return merged rows
-          return _.flatten(_.pluck(_.values(data), 'values'));
-        })
-        .preprocess(query.preprocess)
-        .filter(query.filter)
-        .groupBy(query.groupBy)
-        .reduce(query.reduce)
-        .postprocess(query.postprocess)
-        .series(query.series);
     }
   };
 
