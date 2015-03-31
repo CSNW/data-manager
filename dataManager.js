@@ -401,8 +401,10 @@
       });
     },
 
-    groupBy: function groupBy() {
-      // TODO
+    groupBy: function groupBy(predicate) {
+      return this.then(function(rows) {
+        return this._groupBy(rows, predicate);
+      }.bind(this));
     },
 
     reduce: function reduce() {
@@ -434,9 +436,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var groupBy = function(rows) {
-        return this._groupBy(rows, query.groupBy);
-      }.bind(this);
       var reduce = function(groups) {
         return this._reduce(groups, query.reduce);
       }.bind(this);
@@ -469,7 +468,7 @@
         })
         .preprocess(query.preprocess)
         .filter(query.filter)
-        .then(groupBy)
+        .groupBy(query.groupBy)
         .then(reduce)
         .then(postprocess)
         .then(series);
