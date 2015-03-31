@@ -339,35 +339,58 @@
   */
   var Query = dataManager.Query = function Query(store, query) {
     this.store = store;
+    this.promise = new RSVP.Promise(function load(resolve) {
+      resolve(store.cache);
+    });
 
     this._query = query;
-    this._values = [];
     this.calculate();
   };
 
   Query.prototype ={
-    /**
-      Get results of query
-
-      @return {Promise}
-    */
-    values: function values() {
-      if (this.calculating) {
-        return this.calculating;
-      }
-      else {
-        return new RSVP.Promise(function(resolve) { resolve(this._values); }.bind(this));
-      }
+    // Proxy promise methods
+    then: function() {
+      this.promise = this.promise.then.apply(this.promise, arguments);
+      return this;
+    },
+    'catch': function() {
+      this.promise = this.promise['catch'].apply(this.promise, arguments);
+      return this;
+    },
+    'finally': function() {
+      this.promise = this.promise['finally'].apply(this.promise, arguments);
+      return this;
     },
 
     /**
-      Update query parameters
-
-      @param {Object} query
+      @method from
     */
-    update: function update(query) {
-      this._query = query;
-      this.calculate();
+    from: function from() {
+      // TODO
+    },
+
+    preprocess: function preprocess() {
+      // TODO
+    },
+
+    filter: function filter() {
+      // TODO
+    },
+
+    groupBy: function groupBy() {
+      // TODO
+    },
+
+    reduce: function reduce() {
+      // TODO
+    },
+
+    postprocess: function postprocess() {
+      // TODO
+    },
+
+    series: function series() {
+      // TODO
     },
 
     /**
@@ -386,98 +409,73 @@
     */
     calculate: function calculate() {
       var query = this._query;
+
       var from = (_.isString(query.from) ? [query.from] : query.from) || [];
-
-      // Cancel any existing calculations
-      if (this.calculating) {
-        this.calculating.cancelled = true;
-      }
-
-      var calculation = this.calculating = this.store.load(from)
-        .then(function(data) {
-          // 1. from
-          var rows = _.reduce(data, function(memo, cache, filename) {
-            if (!from.length || _.contains(from, filename)) {
-              return memo.concat(cache.values);
-            }
-            else {
-              return memo;
-            }
-          }, []);
-
-          // 2. preprocess
-          if (_.isFunction(query.preprocess)) {
-            rows = query.preprocess(rows);
-          }
-
-          // 3. filter
-          if (query.filter) {
-            if (_.isFunction(query.filter)) {
-              rows = _.filter(rows, query.filter);
-            }
-            else {
-              rows = _.filter(rows, function(row) {
-                return matcher(query.filter, row);
-              });
-            }
-          }
-
-          // 4. groupBy
-          var results = this._groupBy(rows, query.groupBy);
-
-          // 5. reduce
-          results = this._reduce(results, query.reduce);
-
-          // 6. postprocess
-          if (_.isFunction(query.postprocess)) {
-            var processed = _.map(results, function(result) {
-              return query.postprocess(result.values, result.meta);
-            });
-
-            if (processed[0] instanceof RSVP.Promise) {
-              // postprocess returned promises, wait for them to complete
-              return RSVP.all(processed).then(afterPostProcessing.bind(this));
-            }
-            else if (_.isUndefined(processed[0])) {
-              // Assume, return not called from processed and values were changed directly
-              return afterPostProcessing.call(this);
-            }
-            else {
-              return afterPostProcessing.call(this, processed);
-            }
+      var preprocess = query.preprocess || function(rows) { return rows; };
+      var filter = function(rows) {
+        if (query.filter) {
+          if (_.isFunction(query.filter)) {
+            return _.filter(rows, query.filter);
           }
           else {
-            return afterPostProcessing.call(this);
+            return _.filter(rows, function(row) {
+              return matcher(query.filter, row);
+            });
           }
+        }
+        else {
+          return rows;  
+        }
+      };
+      var groupBy = function(rows) {
+        return this._groupBy(rows, query.groupBy);
+      }.bind(this);
+      var reduce = function(groups) {
+        return this._reduce(groups, query.reduce);
+      }.bind(this);
+      var postprocess = function(groups) {
+        if (query.postprocess) {
+          return RSVP.all(_.map(groups, function(group) {
+            return query.postprocess(group.values, group.meta);
+          })).then(function(results) {
+            _.each(groups, function(group, index) {
+              if (results[index] != null)
+                group.values = results[index];
+            });
 
-          function afterPostProcessing(processed) {
-            if (!_.isUndefined(processed)) {
-              _.each(processed, function(values, index) {
-                results[index].values = values;
-              });
-            }
+            return groups;
+          })
+        }
+        else {
+          return groups;
+        }
+      };
+      var series = function(groups) {
+        return this._series(groups, query.series);
+      }.bind(this);
 
-            // 7. series
-            results = this._series(results, query.series);
-
-            return results;
+      return this
+        .then(function(data) {
+          if (from.length) {
+            return this.store.load(from).then(function(data) {
+              // TODO store.load should only return desired data
+              return _.pick(data, from);
+            });
+          }
+          else {
+            return data;
           }
         }.bind(this))
-        .then(function(results) {
-          if (!calculation.cancelled) {
-            // Store values
-            this._values = results;
-          }
-
-          return results;
-        }.bind(this))
-        ['finally'](function() {
-          if (!calculation.cancelled) {
-            delete this.calculating;
-          }
-        }.bind(this));
-
-      return this.calculating;
+        .then(function(data) {
+          // Return merged rows
+          return _.flatten(_.pluck(_.values(data), 'values'));
+        })
+        .then(preprocess)
+        .then(filter)
+        .then(groupBy)
+        .then(reduce)
+        .then(postprocess)
+        .then(series);
     },
 
     /**

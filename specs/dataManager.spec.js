@@ -302,13 +302,13 @@
       describe('from', function() {
         it('should download files', function(done) {
           spyOn(store, 'load').and.callThrough();
-          query({from: ['a.csv', 'b.csv']}).values().then(function(results) {
+          query({from: ['a.csv', 'b.csv']}).then(function(results) {
             expect(store.load).toHaveBeenCalledWith(['a.csv', 'b.csv']);
           }).then(done, done.fail);
         });
 
         it('should filter store data by from', function(done) {
-          query({from: 'b.csv'}).values().then(function(results) {
+          query({from: 'b.csv'}).then(function(results) {
             expect(results.length).toEqual(1);
             expect(results[0].values.length).toEqual(2);
           }).then(done, done.fail);
@@ -327,7 +327,7 @@
 
               return rows;
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values.length).toEqual(4);
             expect(results[0].values[0].y).toEqual(-200);
             expect(results[0].values[1].x).toEqual(-10.1);
@@ -341,7 +341,7 @@
           query({
             from: 'a.csv',
             filter: {x: {$lt: 0}}
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values.length).toEqual(5);
           }).then(done, done.fail);
         });
@@ -352,7 +352,7 @@
             filter: function(row) {
               return row.type == 'positive';
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values.length).toEqual(5);
           }).then(done, done.fail);
         });
@@ -363,7 +363,7 @@
           query({
             from: 'a.csv',
             groupBy: 'type'
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(3);
             expect(results[0].values.length).toEqual(5);
             expect(results[1].values.length).toEqual(1);
@@ -375,7 +375,7 @@
           query({
             from: ['a.csv', 'b.csv'],
             groupBy: ['file', 'type']
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(5);
 
             // a, negative
@@ -399,7 +399,7 @@
                 return row.type;
               }
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(3);
             expect(results[0].values.length).toEqual(5);
             expect(results[1].values.length).toEqual(1);
@@ -411,7 +411,7 @@
           query({
             from: ['a.csv', 'b.csv'],
             groupBy: ['file', 'type']
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(5);
 
             // a, negative
@@ -444,7 +444,7 @@
               },
               memo: {y: 0, types: []}
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values[0]).toEqual({y: 150, types: ['zero', 'positive']});
           }).then(done, done.fail);
         });
@@ -457,7 +457,7 @@
               columns: ['y'],
               approach: 'sum'
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values[0]).toEqual({y: 150});
           }).then(done, done.fail);
         });
@@ -470,7 +470,7 @@
               columns: ['y'],
               approach: 'avg'
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values[0]).toEqual({y: 30});
           }).then(done, done.fail);
         });
@@ -485,7 +485,7 @@
                 y: 'avg'
               }
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results[0].values[0]).toEqual({x: 15, y: 30});
           }).then(done, done.fail);
         });
@@ -502,7 +502,7 @@
               });
               return values;
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(5);
 
             // a, negative
@@ -530,7 +530,7 @@
               // Values are changed directly without return -> implicit
               // return values;
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(5);
 
             // a, negative
@@ -558,7 +558,7 @@
                 resolve(values);
               });
             }
-          }).values().then(function(results) {
+          }).then(function(results) {
             expect(results.length).toEqual(5);
 
             // a, negative
