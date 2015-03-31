@@ -93,8 +93,7 @@
             delete cache.loading;
           }, this);
 
-          // TODO Return only requested items from cache
-          return this.cache;
+          return _.pick(this.cache, paths);
         }.bind(this));
     },
 
@@ -364,9 +363,17 @@
 
     /**
       @method from
+      @chainable
+      @param {Array|String} paths path of csv(s) to query
+      @return {Query}
     */
-    from: function from() {
-      // TODO
+    from: function from(paths) {
+      if (!paths)
+        return this;
+
+      return this.then(function() {
+        return this.store.load(paths);
+      }.bind(this));
     },
 
     preprocess: function preprocess() {
@@ -410,7 +417,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var from = (_.isString(query.from) ? [query.from] : query.from) || [];
       var preprocess = query.preprocess || function(rows) { return rows; };
       var filter = function(rows) {
         if (query.filter) {
@@ -455,17 +461,7 @@
       }.bind(this);
 
       return this
-        .then(function(data) {
-          if (from.length) {
-            return this.store.load(from).then(function(data) {
-              // TODO store.load should only return desired data
-              return _.pick(data, from);
-            });
-          }
-          else {
-            return data;
-          }
-        }.bind(this))
+        .from(query.from)
         .then(function(data) {
           // Return merged rows
           return _.flatten(_.pluck(_.values(data), 'values'));
