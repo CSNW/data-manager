@@ -11,7 +11,7 @@
   */
   var Store = dataManager.Store = function Store() {
     // Initialize data cache
-    this._cache = {};
+    this.cache = {};
 
     // Load types from static
     this.types = _.clone(Store.types);
@@ -39,33 +39,13 @@
 
   Store.prototype ={
     /**
-      Load current data in store (sync)
-
-      @param {String} [path]
-      @return {Object}
-    */
-    cache: function(path) {
-      // Initialize cache for path (if needed)
-      if (path && !this._cache[path]) {
-        this._cache[path] = {
-          meta: {filename: path},
-          raw: [],
-          values: []
-        };
-      }
-
-      // Return path or all of data
-      return path ? this._cache[path] : this._cache;
-    },
-
-    /**
       Load values currently in store
       
       @return {Promise}
     */
     values: function() {
       return new RSVP.Promise(function(resolve) {
-        resolve(this.cache());
+        resolve(this.cache);
       }.bind(this));
     },
 
@@ -78,7 +58,7 @@
     */
     load: function load(path, options) {
       var paths = _.isArray(path) ? path : [path];
-      
+
       // Generate _cast and _map
       options = options || {};
       if (options.cast)
@@ -94,12 +74,12 @@
         .then(function _doneLoading(rows) {
           // Process rows for each path
           _.each(paths, function(path, index) {
-            var cache = this.cache(path);
+            var cache = this.cache[path];
 
             // Only update if new values or new cast / map
             if (cache.raw.length != rows[index].length || options.cast || options.map) {
               // Store options
-              _.extend(cache.meta, options);
+              _.extend(cache, options);
 
               // Store raw rows
               cache.raw = rows[index];
@@ -107,14 +87,14 @@
               // Store processed rows
               this._processRows(cache);
 
-              cache.meta.loaded = new Date();
+              cache.loaded = new Date();
             }
 
-            delete cache.meta.loading;
+            delete cache.loading;
           }, this);
 
           // TODO Return only requested items from cache
-          return this.cache();
+          return this.cache;
         }.bind(this));
     },
 
@@ -172,16 +152,15 @@
 
     // Process all data
     _process: function _process() {
-      _.each(this.cache(), function(cache, path) {
+      _.each(this.cache, function(cache, path) {
         this._processRows(cache);
       }, this);
     },
 
     // Process given rows
     _processRows: function _processRows(cache) {
-      var options = cache.meta;
-      var castFn = (options && options._cast) || this._cast;
-      var mapFn = (options && options._map) || this._map;
+      var castFn = (cache._cast) || this._cast;
+      var mapFn = (cache._map) || this._map;
 
       // Cast and map rows
       cache.values = cache.raw;
@@ -276,20 +255,27 @@
 
     // Load (with caching)
     _load: function _load(path, options) {
-      var cache = this.cache(path);
+      var cache = this.cache[path];
 
-      if (cache.meta.loaded) {
+      if (!cache) {
+        cache = this.cache[path] = {
+          filename: path,
+          raw: [],
+          values: []
+        };
+      }
+      if (cache.loaded) {
         return new RSVP.Promise(function(resolve) { 
           resolve(cache.raw); 
         });
       }
-      else if (cache.meta.loading) {
-        return cache.meta.loading;
+      else if (cache.loading) {
+        return cache.loading;
       }
       else {
         var loading = this._loadCsv(path);
 
-        cache.meta.loading = loading;
+        cache.loading = loading;
         return loading;
       }
     },
