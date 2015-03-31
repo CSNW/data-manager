@@ -385,8 +385,20 @@
       });
     },
 
-    filter: function filter() {
-      // TODO
+    filter: function filter(predicate) {
+      if (!predicate)
+        return this;
+
+      return this.then(function(rows) {
+        if (_.isFunction(predicate)) {
+          return _.filter(rows, predicate);
+        }
+        else {
+          return _.filter(rows, function(row) {
+            return matcher(predicate, row);
+          });
+        }
+      });
     },
 
     groupBy: function groupBy() {
@@ -422,21 +434,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var filter = function(rows) {
-        if (query.filter) {
-          if (_.isFunction(query.filter)) {
-            return _.filter(rows, query.filter);
-          }
-          else {
-            return _.filter(rows, function(row) {
-              return matcher(query.filter, row);
-            });
-          }
-        }
-        else {
-          return rows;  
-        }
-      };
       var groupBy = function(rows) {
         return this._groupBy(rows, query.groupBy);
       }.bind(this);
@@ -471,7 +468,7 @@
           return _.flatten(_.pluck(_.values(data), 'values'));
         })
         .preprocess(query.preprocess)
-        .then(filter)
+        .filter(query.filter)
         .then(groupBy)
         .then(reduce)
         .then(postprocess)
