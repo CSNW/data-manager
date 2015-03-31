@@ -225,7 +225,7 @@
       });
 
       describe('loading', function(done) {
-        it('should use cast/map given with load or registered cast/map', function() {
+        it('should use cast/map given with load or registered cast/map', function(done) {
           store.cast({a: 'Number', b: 'Number'}).map({x: 'a', y: 'b'});
 
           store.load('a.csv');

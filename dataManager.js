@@ -10,9 +10,6 @@
     @class Store
   */
   var Store = dataManager.Store = function Store() {
-    this.loading = [];
-    this.errors = [];
-
     // Initialize data cache
     this._cache = {};
 
@@ -20,8 +17,8 @@
     this.types = _.clone(Store.types);
 
     // Set default cast and map functions
-    this._cast = this._generateCastByFilename({default: function(row) { return row; }});
-    this._map = this._generateMapByFilename({default: function(row) { return row; }});
+    this._cast = this._generateCast(function(row) { return row; });
+    this._map = this._generateMap(function(row) { return row; });
   };
 
   // Type converters for cast
@@ -90,26 +87,35 @@
         options._map = this._generateMap(options.map);
 
       // 1. Load from path (cache or csv)
-      var loading = RSVP.all(_.map(paths, function(path) {
-        return this._load(path, options);
-      }, this));
+      return RSVP
+        .all(_.map(paths, function(path) {
+          return this._load(path, options);
+        }, this))
+        .then(function _doneLoading(rows) {
+          // Process rows for each path
+          _.each(paths, function(path, index) {
+            var cache = this.cache(path);
 
-      // 2. Process rows
-      // 3. Catch errors
-      // 4. Finally remove
-      loading = loading
-        .then(this._doneLoading.bind(this, paths, options))
-        .catch(function(err) {
-          this._error({from: 'Store#load', error: err, paths: paths, options: options});
-        }.bind(this))
-        .finally(function() {
-          this.loading = _.without(this.loading, loading);
+            // Only update if new values or new cast / map
+            if (cache.raw.length != rows[index].length || options.cast || options.map) {
+              // Store options
+              _.extend(cache.meta, options);
+
+              // Store raw rows
+              cache.raw = rows[index];
+
+              // Store processed rows
+              this._processRows(cache);
+
+              cache.meta.loaded = new Date();
+            }
+
+            delete cache.meta.loading;
+          }, this);
+
+          // TODO Return only requested items from cache
+          return this.cache();
         }.bind(this));
-
-      // Add to loading (treat this.loading as immutable array)
-      this.loading = this.loading.concat([loading]);
-
-      return loading;
     },
 
     /**
@@ -120,22 +126,7 @@
       @chainable
     */
     cast: function cast(options) {
-      this._cast = this._generateCastByFilename({default: options});
-      this._process();
-
-      return this;
-    },
-
-    /**
-      Register cast options/iterator to be called on every incoming row, by filename
-
-      @param {Object|Function} options or iterator
-      - As object: {filenameA: {options by key or iterator}, filenameB: ..., default: ...}
-      - As iterator: function(filename, row) {return cast row}
-      @chainable
-    */
-    castByFilename: function castByFilename(options) {
-      this._cast = this._generateCastByFilename(options);
+      this._cast = this._generateCast(options);
       this._process();
 
       return this;
@@ -163,22 +154,7 @@
       @chainable
     */
     map: function map(options) {
-      this._map = this._generateMapByFilename({default: options});
-      this._process();
-
-      return this;
-    },
-
-    /**
-      Register map options/iterator to be called with every incoming row by filename
-
-      @param {Object|Function} options or iterator
-      - As object (filanameA: {options or iterator}, filenameB: ..., default: ...},
-      - As iterator: function(filename, row) {return mapped row}
-      @chainable
-    */
-    mapByFilename: function mapByFilename(options) {
-      this._map = this._generateMapByFilename(options);
+      this._map = this._generateMap(options);
       this._process();
 
       return this;
@@ -197,20 +173,26 @@
     // Process all data
     _process: function _process() {
       _.each(this.cache(), function(cache, path) {
-        cache.values = this._processRows(cache.raw, cache.meta);
+        this._processRows(cache);
       }, this);
     },
 
     // Process given rows
-    _processRows: function _processRows(rows, options) {
-      var castFn = (options && options._cast) || this._cast.bind(this, options.filename);
-      var mapFn = (options && options._map) || this._map.bind(this, options.filename);
+    _processRows: function _processRows(cache) {
+      var options = cache.meta;
+      var castFn = (options && options._cast) || this._cast;
+      var mapFn = (options && options._map) || this._map;
 
       // Cast and map rows
-      var cast = _.compact(_.flatten(_.map(rows, castFn, this), true));
-      var mapped = _.compact(_.flatten(_.map(cast, mapFn, this), true));
+      cache.values = cache.raw;
+      cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
+        return castFn.call(this, row, index, cache);
+      }, this), true));
+      cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
+        return mapFn.call(this, row, index, cache);
+      }, this), true));
 
-      return mapped;
+      return cache.values;
     },
 
     // Generate map function for options
@@ -227,7 +209,7 @@
         return value;
       }
 
-      return function _map(row) {
+      return function mapRow(row) {
         var mappedRows = [{}];
         var keys = [];
         _.each(options, function(option, to) {
@@ -277,32 +259,11 @@
       };
     },
 
-    _generateMapByFilename: function _generateMapByFilename(options) {
-      if (_.isFunction(options)) {
-        return options;
-      }
-      else {
-        options = _.defaults(options || {}, {default: {}});
-        _.each(options, function(option, key) {
-          options[key] = this._generateMap(option);
-        }, this);
-
-        return function _mapByFilename(filename, row) {
-          if (options[filename]) {
-            return options[filename](row);
-          }
-          else {
-            return options['default'](row);
-          }
-        };
-      }
-    },
-
     _generateCast: function _generateCast(options) {
       if (_.isFunction(options)) return options;
 
       var types = this.types;
-      return function _cast(row) {
+      return function castRow(row) {
         _.each(options, function(type, key) {
           var cast = _.isFunction(type) ? type : types[type];
           if (cast)
@@ -311,27 +272,6 @@
 
         return row;
       };
-    },
-
-    _generateCastByFilename: function _generateCastByFilename(options) {
-      if (_.isFunction(options)) {
-        return options;
-      }
-      else {
-        options = _.defaults(options || {}, {default: {}});
-        _.each(options, function(option, key) {
-          options[key] = this._generateCast(option);
-        }, this);
-
-        return function _castByFilename(filename, row) {
-          if (options[filename]) {
-            return options[filename](row);
-          }
-          else {
-            return options['default'](row);
-          }
-        };
-      }
     },
 
     // Load (with caching)
@@ -362,37 +302,6 @@
           resolve(rows);
         });
       });
-    },
-
-    // Handle loading finished (successfully)
-    _doneLoading: function _doneLoading(paths, options, rows) {
-      // Process rows for each path
-      _.each(paths, function(path, index) {
-        var cache = this.cache(path);
-
-        // Only update if new values or new cast / map
-        if (cache.raw.length != rows[index].length || options.cast || options.map) {
-          // Store options
-          _.extend(cache.meta, options);
-
-          // Store raw rows
-          cache.raw = rows[index];
-
-          // Store processed rows
-          cache.values = this._processRows(rows[index], cache.meta);
-
-          cache.meta.loaded = new Date();
-        }
-
-        delete cache.meta.loading;
-      }, this);
-
-      return this.cache();
-    },
-
-    // Handle errors
-    _error: function(info) {
-      this.errors.push(info);
     }
   };
 
@@ -575,9 +484,6 @@
           }
 
           return results;
-        }.bind(this))
-        ['catch'](function(err) {
-          this.store._error({from: 'Query#calculate', error: err, query: this});
         }.bind(this))
         ['finally'](function() {
           if (!calculation.cancelled) {
