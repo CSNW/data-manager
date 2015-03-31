@@ -401,9 +401,66 @@
       });
     },
 
+    /**
+      @method groupBy
+      @chainable
+      @param {String|Array|Object} predicate key or keys array or key function object to group by
+      - 'key' -> meta: group: {key: 'value'}
+      - ['keyA', 'keyB'] -> meta: {keyA: 'value', keyB: 'value'},
+      - {keyA: function(row) {...}, keyB: function(row) {...}} -> meta: {keyA: 'value', keyB: 'value'}
+      @return {Query}
+    */
     groupBy: function groupBy(predicate) {
-      return this.then(function(rows) {
-        return this._groupBy(rows, predicate);
+        if (!predicate) {
+          return [{meta: {}, values: rows}];
+        }
+        else {
+          var grouped = {};
+          var meta = {};
+
+          // Convert String -> Array -> Object format for predicate
+          if (_.isString(predicate)) {
+            predicate = [predicate];
+          }
+          if (_.isArray(predicate)) {
+            predicate = _.object(predicate, _.map(predicate, function(key) {
+              return function(row) {
+                return row[key];
+              };
+            }));
+          }
+
+          // Convert predicate to arrays for quick iteration
+          var keys = [];
+          var values = [];
+          _.each(predicate, function(value, key) {
+            keys.push(key);
+            values.push(value);
+          });
+
+          _.each(rows, function(row, index, rows) {
+            var key = quickKey(row, keys, values);
+            if (!meta[key]) {
+              meta[key] = _.object(keys, _.map(keys, function(key, index) {
+                return values[index](row);
+              }));
+
+              grouped[key] = [];
+            }
+
+            grouped[key].push(row);
+          });
+
+          // Convert to [{meta: {...}, values: [...]}] format
+          grouped = _.map(grouped, function(rows, key) {
+            return {
+              meta: meta[key],
+              values: rows
+            };
+          });
+          
+          return grouped;
+        }
       }.bind(this));
     },
 
@@ -466,69 +523,6 @@
         .reduce(query.reduce)
         .postprocess(query.postprocess)
         .series(query.series);
-    },
-
-    /**
-      Internal implmentation of groupBy
-      
-      @param {Array} rows
-      @param {String|Array|Object} key or keys array or key function object to group by
-      - 'key' -> meta: group: {key: 'value'}
-      - ['keyA', 'keyB'] -> meta: {keyA: 'value', keyB: 'value'},
-      - {keyA: function(row) {...}, keyB: function(row) {...}} -> meta: {keyA: 'value', keyB: 'value'}
-      @return {Array}
-    */
-    _groupBy: function(rows, groupBy) {
-      if (!groupBy) {
-        return [{meta: {}, values: rows}];
-      }
-      else {
-        var grouped = {};
-        var meta = {};
-
-        // Convert String -> Array -> Object format for groupBy
-        if (_.isString(groupBy)) {
-          groupBy = [groupBy];
-        }
-        if (_.isArray(groupBy)) {
-          groupBy = _.object(groupBy, _.map(groupBy, function(key) {
-            return function(row) {
-              return row[key];
-            };
-          }));
-        }
-
-        // Convert groupBy to arrays for quick iteration
-        var keys = [];
-        var values = [];
-        _.each(groupBy, function(value, key) {
-          keys.push(key);
-          values.push(value);
-        });
-
-        _.each(rows, function(row, index, rows) {
-          var key = quickKey(row, keys, values);
-          if (!meta[key]) {
-            meta[key] = _.object(keys, _.map(keys, function(key, index) {
-              return values[index](row);
-            }));
-
-            grouped[key] = [];
-          }
-
-          grouped[key].push(row);
-        });
-
-        // Convert to [{meta: {...}, values: [...]}] format
-        grouped = _.map(grouped, function(rows, key) {
-          return {
-            meta: meta[key],
-            values: rows
-          };
-        });
-        
-        return grouped;
-      }
     },
 
     /**
