@@ -209,44 +209,18 @@
       });
 
       describe('values', function() {
-        it('should get values for everything loaded/loading up to that point', function(done) {
-          store.load('a.csv');
-          store.load('b.csv');
-          store.values().then(function(data) {
+        it('should get values for everything loaded up to that point', function(done) {
+          RSVP.all([
+            store.load('a.csv'),
+            store.load('b.csv')
+          ]).then(function() {
+            return store.values();
+          }).then(function(data) {
             expect(data['a.csv']).not.toBeUndefined();
             expect(data['a.csv'].values.length).toEqual(1);
             expect(data['b.csv']).not.toBeUndefined();
             expect(data['b.csv'].values.length).toEqual(1);
-            done();
-          });
-        });
-
-        it('should not wait for subsequent loads', function(done) {
-          store.load('a.csv');
-          store.values().then(function(data) {
-            expect(data['b.csv']).toBeUndefined();
-          });
-
-          _.defer(function() {
-            store.load('b.csv');
-            store.values().then(function(data) {
-              expect(data['b.csv']).not.toBeUndefined();
-              done();
-            });  
-          });
-        });
-      });
-
-      describe('subscribe', function() {
-        it('should notify subscribers initially and on each load', function(done) {
-          var spy = jasmine.createSpy();
-
-          store.subscribe(spy);
-
-          RSVP.all([store.load('a.csv'), store.load('b.csv'), store.load('c.csv')]).then(function() {
-            expect(spy.calls.count()).toEqual(4);
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -268,8 +242,7 @@
             expect(data['a.csv'].values[0].y).toEqual(4.56);
             expect(data['b.csv'].values[0].x).toEqual('4.56');
             expect(data['b.csv'].values[0].y).toEqual('1.23');
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -282,19 +255,17 @@
 
             expect(store.cache()['b.csv']).not.toBeUndefined();
             expect(store.cache()['b.csv'].raw.length).toEqual(1);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should not load again if currently loading', function(done) {
-          store.load(['a.csv', 'b.csv']);
-          store.load('a.csv');
-          store.load('b.csv');
-
-          store.ready().then(function() {
+          RSVP.all([
+            store.load(['a.csv', 'b.csv']),
+            store.load('a.csv'),
+            store.load('b.csv')
+          ]).then(function() {
             expect(_loadCsv.calls.count()).toEqual(2);
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
     });
@@ -329,16 +300,14 @@
           spyOn(store, 'load').and.callThrough();
           query({from: ['a.csv', 'b.csv']}).values().then(function(results) {
             expect(store.load).toHaveBeenCalledWith(['a.csv', 'b.csv']);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should filter store data by from', function(done) {
           query({from: 'b.csv'}).values().then(function(results) {
             expect(results.length).toEqual(1);
             expect(results[0].values.length).toEqual(2);
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -359,8 +328,7 @@
             expect(results[0].values[0].y).toEqual(-200);
             expect(results[0].values[1].x).toEqual(-10.1);
             expect(results[0].values[2].y).toEqual(101);
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -371,8 +339,7 @@
             filter: {x: {$lt: 0}}
           }).values().then(function(results) {
             expect(results[0].values.length).toEqual(5);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should filter by function or matcher', function(done) {
@@ -383,8 +350,7 @@
             }
           }).values().then(function(results) {
             expect(results[0].values.length).toEqual(5);
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -398,8 +364,7 @@
             expect(results[0].values.length).toEqual(5);
             expect(results[1].values.length).toEqual(1);
             expect(results[2].values.length).toEqual(5);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should group by keys', function(done) {
@@ -419,8 +384,7 @@
             expect(results[2].values.length).toEqual(5);
             expect(results[3].values.length).toEqual(1);
             expect(results[4].values.length).toEqual(1);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should group by function', function(done) {
@@ -436,8 +400,7 @@
             expect(results[0].values.length).toEqual(5);
             expect(results[1].values.length).toEqual(1);
             expect(results[2].values.length).toEqual(5);
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should add group meta to grouped values', function(done) {
@@ -457,9 +420,7 @@
             expect(results[2].meta).toEqual({file: 'a', type: 'positive'});
             expect(results[3].meta).toEqual({file: 'b', type: 'negative'});
             expect(results[4].meta).toEqual({file: 'b', type: 'positive'});
-
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -481,9 +442,7 @@
             }
           }).values().then(function(results) {
             expect(results[0].values[0]).toEqual({y: 150, types: ['zero', 'positive']});
-
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should reduce with "sum" approach', function(done) {
@@ -496,9 +455,7 @@
             }
           }).values().then(function(results) {
             expect(results[0].values[0]).toEqual({y: 150});
-
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should reduce with "avg" approach', function(done) {
@@ -511,9 +468,7 @@
             }
           }).values().then(function(results) {
             expect(results[0].values[0]).toEqual({y: 30});
-
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should reduce byColumn with approach', function(done) {
@@ -528,9 +483,7 @@
             }
           }).values().then(function(results) {
             expect(results[0].values[0]).toEqual({x: 15, y: 30});
-
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
 
@@ -558,12 +511,7 @@
             expect(results[2].values[0].fileAndType).toEqual('a+positive');
             expect(results[3].values[0].fileAndType).toEqual('b+negative');
             expect(results[4].values[0].fileAndType).toEqual('b+positive');
-
-            done();
-          }).catch(function(err) {
-            expect(err).toBeUndefined();
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should allow implicit return of values', function(done) {
@@ -591,12 +539,7 @@
             expect(results[2].values[0].fileAndType).toEqual('a+positive');
             expect(results[3].values[0].fileAndType).toEqual('b+negative');
             expect(results[4].values[0].fileAndType).toEqual('b+positive');
-
-            done();
-          }).catch(function(err) {
-            expect(err).toBeUndefined();
-            done();
-          });
+          }).then(done, done.fail);
         });
 
         it('should handle promises returned from postprocess', function(done) {
@@ -624,12 +567,7 @@
             expect(results[2].values[0].fileAndType).toEqual('a+positive');
             expect(results[3].values[0].fileAndType).toEqual('b+negative');
             expect(results[4].values[0].fileAndType).toEqual('b+positive');
-
-            done();
-          }).catch(function(err) {
-            expect(err).toBeUndefined();
-            done();
-          });
+          }).then(done, done.fail);
         });
       });
     });

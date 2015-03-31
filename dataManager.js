@@ -5,14 +5,13 @@
   var dataManager = global.dataManager = {};
 
   /**
-    Store
     Generic data store with async load, cast, map, and query
+
+    @class Store
   */
   var Store = dataManager.Store = function Store() {
-    this.subscriptions = [];
     this.loading = [];
     this.errors = [];
-    this.loaded = false;
 
     // Initialize data cache
     this._cache = {};
@@ -27,21 +26,21 @@
 
   // Type converters for cast
   Store.types = {
-    'Number': function(value) { return +value; },
+    'Number': function(value) {
+      return +value;
+    },
     'Boolean': function(value) {
       return _.isString(value) ? value.toUpperCase() === 'TRUE' : (value === 1 || value === true);
     },
-    'String': function(value) { return _.isUndefined(value) ? '' : '' + value; },
-    'Date': function(value) { return new Date(value); }
+    'String': function(value) {
+      return _.isUndefined(value) ? '' : '' + value;
+    },
+    'Date': function(value) {
+      return new Date(value);
+    }
   };
 
-  var uniqueIds = {
-    load: 1,
-    _load: 1,
-    calculate: 1
-  };
-
-  _.extend(Store.prototype, {
+  Store.prototype ={
     /**
       Load current data in store (sync)
 
@@ -63,27 +62,24 @@
     },
 
     /**
-      Load values in store (once currently loading is complete)
+      Load values currently in store
       
       @return {Promise}
     */
     values: function() {
-      return this.ready().then(function(store) {
-        return store.cache();
-      });
+      return new RSVP.Promise(function(resolve) {
+        resolve(this.cache());
+      }.bind(this));
     },
 
     /**
       Load file(s) into store with options
 
-      @param {String|Array} path(s) to csv
+      @param {String|Array} path to csv(s)
       @param {Object} [options]
       @return {Promise}
     */
     load: function load(path, options) {
-      var id = 'Store#load.' + uniqueIds.load++;
-      log.time(id);
-
       var paths = _.isArray(path) ? path : [path];
       
       // Generate _cast and _map
@@ -108,33 +104,12 @@
         }.bind(this))
         .finally(function() {
           this.loading = _.without(this.loading, loading);
-          this.loaded = true;
-          log.timeEnd(id);
         }.bind(this));
 
       // Add to loading (treat this.loading as immutable array)
       this.loading = this.loading.concat([loading]);
 
       return loading;
-    },
-
-    /**
-      Subscribe to changes from store
-
-      @param {Function} callback to call with (data, event: name, store)
-      @param {Object} [context]
-      @return {Subscription}
-    */
-    subscribe: function(callback, context) {
-      // Create new subscription
-      var subscription = new Subscription(callback, context);
-      this.subscriptions.push(subscription);
-
-      if (!this.loading.length && this.loaded) {
-        subscription.trigger(this.cache(), {name: 'existing', store: this});
-      }
-
-      return subscription;
     },
 
     /**
@@ -219,31 +194,11 @@
       return new Query(this, options);
     },
 
-    /**
-      Promise that resolves when currently loading completes
-
-      @return {Promise}
-    */
-    ready: function ready() {
-      return RSVP.all(this.loading).then(function() { 
-        return this;
-      }.bind(this));
-    },
-
-    // Notify subscribers with current data
-    _notify: function _notify(name) {
-      _.each(this.subscriptions, function(subscription) {
-        subscription.trigger(this.cache(), {name: name, store: this});
-      }, this);
-    },
-
     // Process all data
     _process: function _process() {
-      log.time('Store#_process');
       _.each(this.cache(), function(cache, path) {
         cache.values = this._processRows(cache.raw, cache.meta);
       }, this);
-      log.timeEnd('Store#_process');
     },
 
     // Process given rows
@@ -384,7 +339,6 @@
       var cache = this.cache(path);
 
       if (cache.meta.loaded) {
-        log('Store#_load(' + path + ') -> from cache');  
         return new RSVP.Promise(function(resolve) { 
           resolve(cache.raw); 
         });
@@ -393,12 +347,7 @@
         return cache.meta.loading;
       }
       else {
-        var id = 'Store#_load.' + uniqueIds._load++;
-        log.time(id);
-
-        var loading = this._loadCsv(path).finally(function() {
-          log.timeEnd(id);
-        });
+        var loading = this._loadCsv(path);
 
         cache.meta.loading = loading;
         return loading;
@@ -430,9 +379,7 @@
           cache.raw = rows[index];
 
           // Store processed rows
-          log.time('_process');
           cache.values = this._processRows(rows[index], cache.meta);
-          log.timeEnd('_process');
 
           cache.meta.loaded = new Date();
         }
@@ -440,16 +387,14 @@
         delete cache.meta.loading;
       }, this);
 
-      this._notify('load');
       return this.cache();
     },
 
     // Handle errors
     _error: function(info) {
-      log.error(info);
       this.errors.push(info);
     }
-  });
+  };
 
   /**
     Query
@@ -499,20 +444,13 @@
   */
   var Query = dataManager.Query = function Query(store, query) {
     this.store = store;
-    this.subscriptions = [];
 
     this._query = query;
     this._values = [];
-
-    // Subscribe to store changes and recalculate on change
-    this._subscription = this.store.subscribe(function() {
-      if (this.calculating) return;
-      
-      this.calculate();
-    }, this);
+    this.calculate();
   };
 
-  _.extend(Query.prototype, {
+  Query.prototype ={
     /**
       Get results of query
 
@@ -525,24 +463,6 @@
       else {
         return new RSVP.Promise(function(resolve) { resolve(this._values); }.bind(this));
       }
-    },
-
-    /**
-      Subscribe to changes in query results (including load)
-
-      @param {Function} callback to call with (values, event: name, query, store)
-      @param {Object} [context]
-      @return {Subscription}
-    */
-    subscribe: function subscribe(callback, context) {
-      var subscription = new Subscription(callback, context);
-      this.subscriptions.push(subscription);
-
-      if (!this.calculating && this.store.loaded) {
-        subscription.trigger(this._values, {name: name, store: this.store, query: this});
-      }
-
-      return subscription;
     },
 
     /**
@@ -570,9 +490,6 @@
       @return {Promise}
     */
     calculate: function calculate() {
-      var id = 'Query#calculate.' + uniqueIds.calculate++;
-      log.time(id);
-
       var query = this._query;
       var from = (_.isString(query.from) ? [query.from] : query.from) || [];
 
@@ -584,7 +501,6 @@
       var calculation = this.calculating = this.store.load(from)
         .then(function(data) {
           // 1. from
-          log.time(id + ':from');
           var rows = _.reduce(data, function(memo, cache, filename) {
             if (!from.length || _.contains(from, filename)) {
               return memo.concat(cache.values);
@@ -593,17 +509,13 @@
               return memo;
             }
           }, []);
-          log.timeEnd(id + ':from');
 
           // 2. preprocess
-          log.time(id + ':preprocess');
           if (_.isFunction(query.preprocess)) {
             rows = query.preprocess(rows);
           }
-          log.timeEnd(id + ':preprocess');
 
           // 3. filter
-          log.time(id + ':filter');
           if (query.filter) {
             if (_.isFunction(query.filter)) {
               rows = _.filter(rows, query.filter);
@@ -614,20 +526,14 @@
               });
             }
           }
-          log.timeEnd(id + ':filter');
 
           // 4. groupBy
-          log.time(id + ':groupBy');
           var results = this._groupBy(rows, query.groupBy);
-          log.timeEnd(id + ':groupBy');
 
           // 5. reduce
-          log.time(id + ':reduce');
           results = this._reduce(results, query.reduce);
-          log.timeEnd(id + ':reduce');
 
           // 6. postprocess
-          log.time(id + ':postprocess');
           if (_.isFunction(query.postprocess)) {
             var processed = _.map(results, function(result) {
               return query.postprocess(result.values, result.meta);
@@ -655,14 +561,10 @@
                 results[index].values = values;
               });
             }
-            log.timeEnd(id + ':postprocess');
 
             // 7. series
-            log.time(id + ':series');
             results = this._series(results, query.series);
-            log.timeEnd(id + ':series');
 
-            log.timeEnd(id);
             return results;
           }
         }.bind(this))
@@ -670,32 +572,20 @@
           if (!calculation.cancelled) {
             // Store values
             this._values = results;
-
-            // Notify subscribers
-            this._notify('calculated');
           }
+
+          return results;
         }.bind(this))
-        .catch(function(err) {
+        ['catch'](function(err) {
           this.store._error({from: 'Query#calculate', error: err, query: this});
         }.bind(this))
-        .finally(function(results) {
+        ['finally'](function() {
           if (!calculation.cancelled) {
             delete this.calculating;
           }
         }.bind(this));
 
       return this.calculating;
-    },
-
-    /**
-      Notify subscribers of changes
-
-      @param {String} name of event
-    */
-    _notify: function(name) {
-      _.each(this.subscriptions, function(subscription) {
-        subscription.trigger(this._values, {name: name, store: this.store, query: this});
-      }, this);
     },
 
     /**
@@ -851,42 +741,32 @@
         return series;
       }
     }
-  });
-
-  /**
-    Subscription
-    Disposable subscription
-    
-    @param {Function} callback to call
-    @param {Object} [context] to use for callback
-  */
-  var Subscription = dataManager.Subscription = function Subscription(callback, context) {
-    this.callback = callback;
-    this.context = context;
-
-    this._disposed = false;
   };
-
-  _.extend(Subscription.prototype, {
-    /**
-      Stop listening to changes
-    */
-    dispose: function dispose() {
-      this._disposed = true;
-    },
-
-    /**
-      Directly trigger subscription
-    */
-    trigger: function() {
-      if (!this._disposed)
-        this.callback.apply(this.context || null, arguments);
-    }
-  });
 
   /**
     Matching helper for advanced querying
 
+    Logical: $and, $or, $not, $nor
+    Comparison: $gt, $gte, $lt, $lte, $in, $ne, $nin
+
+    @example
+    ```js
+    var test = {a: 4, b: 3, c: 2, d: 1};
+    
+    // a = 4 AND b = 2
+    matcher({a: 4, b: 3}, test); // -> true
+    
+    // z = 0 OR b = 3
+    matcher({$or: {z: 0, b: 3}}, test); // -> true
+    
+    // c < 10 AND d >= 1
+    matcher({c: {$lt: 10}, d: {$gte: 1}}, test); // -> true
+
+    // a in [3, 4, 5] and d != 0
+    matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}}, test); // -> true
+    ```
+  
+    @method matcher
     @param {Object} query
     @param {Object} row
     @param {String} [lookup] (lookup value for recursion)
@@ -953,49 +833,30 @@
   };
 
   /**
-    Resolve data from row by key
+    Resolve value from object by nested key
 
-    @param {Object} row
+    @example
+    ```js
+    var obj = {a: 1, b: {c: 2, d: {e: 3}}};
+    dataManager.resolve(obj, 'a'); // -> 1
+    dataManager.resolve(obj, 'b.c'); // -> 2
+    dataManager.resolve(obj, 'b.d.e'); // -> 3
+    dataManager.resolve(obj, 'x.y.z'); // -> undefined
+    ```
+  
+    @method resolve
+    @param {Object} obj
     @param {String} key
+    @return {Any}
   */
-  var resolve = dataManager.resolve = function resolve(row, key) {
-    if (!row) return;
-    if (row[key]) return row[key];
+  var resolve = dataManager.resolve = function resolve(obj, key) {
+    if (!obj) return;
+    if (obj[key]) return obj[key];
 
     var parts = key.split('.');
     return _.reduce(parts, function(memo, part) {
       return memo && memo[part];
-    }, row);
-  };
-
-  // Logging helpers
-  var log = dataManager.log = function log() {
-    if (log.enable) {
-      var args = _.toArray(arguments);
-      args.unshift('data-manager:');
-      console.log.apply(console, args);
-    }
-  };
-  log.enable = false;
-  log.error = function() {
-    // Always show error logs
-    var args = _.toArray(arguments);
-    args.unshift('data-manager:');
-    if (_.isFunction(console.error)) {
-      console.error.apply(console, args);
-    }
-    else {
-      args.splice(1, 0, 'ERROR');
-      console.log.apply(console, args);
-    }
-  };
-  log.time = function(id) {
-    if (log.enable && _.isFunction(console.time))
-      console.time('data-manager: ' + id);
-  };
-  log.timeEnd = function(id) {
-    if (log.enable && _.isFunction(console.timeEnd))
-      console.timeEnd('data-manager: ' + id);
+    }, obj);
   };
 
   // Create a key for groupBy using key:value format
