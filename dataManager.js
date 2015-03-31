@@ -528,9 +528,42 @@
     },
 
     series: function series(options) {
-      return this.then(function(groups) {
-        return this._series(groups, options);
-      }.bind(this));
+      return this.then(function _series(results) {
+        // TODO, don't put values directly on the series object (clone first)
+        if (!options) {
+          // Create series defaults
+          _.each(results, function(result, index) {
+            result.key = 'series-' + index;
+            result.name = _.reduce(result.meta, function(memo, value, key) {
+              var description = key + '=' + value;
+              return memo.length ? memo + ', ' + description : description;
+            }, '');
+          });
+        }
+        else {
+          if (_.isArray(options)) {
+            results = _.map(options, createSeries);
+          }
+          else {
+            _.each(options, function(series_values, key) {
+              options[key] = _.map(series_values, createSeries);
+            });
+            results = options;
+          }
+        }
+
+        return results;
+
+        function createSeries(series) {
+          // Find matching result and load values for series
+          var result = _.find(results, function(result) {
+            return matcher(series.meta, result.meta);
+          });
+
+          series.values = (result && result.values) || [];
+          return series;
+        }
+      });
     },
 
     /**
@@ -562,50 +595,6 @@
         .reduce(query.reduce)
         .postprocess(query.postprocess)
         .series(query.series);
-    },
-
-    /**
-      Internal implementation of series
-
-      @param {Array} results
-      @param {Array} series definitions (by meta)
-      @return {Array}
-    */
-    _series: function(results, series) {
-      // TODO, don't put values directly on the series object (clone first)
-      if (!series) {
-        // Create series defaults
-        _.each(results, function(result, index) {
-          result.key = 'series-' + index;
-          result.name = _.reduce(result.meta, function(memo, value, key) {
-            var description = key + '=' + value;
-            return memo.length ? memo + ', ' + description : description;
-          }, '');
-        });
-      }
-      else {
-        if (!_.isArray(series)) {
-          _.each(series, function(series_values, key) {
-            series[key] = _.map(series_values, createSeries);
-          });
-          results = series;
-        }
-        else {
-          results = _.map(series, createSeries);
-        }
-      }
-
-      return results;
-
-      function createSeries(series) {
-        // Find matching result and load values for series
-        var result = _.find(results, function(result) {
-          return matcher(series.meta, result.meta);
-        });
-
-        series.values = (result && result.values) || [];
-        return series;
-      }
     }
   };
 
