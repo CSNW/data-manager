@@ -431,8 +431,10 @@
       });
     },
 
-    series: function series() {
-      // TODO
+    series: function series(options) {
+      return this.then(function(groups) {
+        return this._series(groups, options);
+      }.bind(this));
     },
 
     /**
@@ -452,10 +454,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var series = function(groups) {
-        return this._series(groups, query.series);
-      }.bind(this);
-
       return this
         .from(query.from)
         .then(function(data) {
@@ -467,7 +465,7 @@
         .groupBy(query.groupBy)
         .reduce(query.reduce)
         .postprocess(query.postprocess)
-        .then(series);
+        .series(query.series);
     },
 
     /**
