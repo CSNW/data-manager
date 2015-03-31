@@ -371,7 +371,7 @@
       if (!paths)
         return this;
 
-      return this.then(function() {
+      return this.then(function _from() {
         return this.store.load(paths);
       }.bind(this));
     },
@@ -380,7 +380,7 @@
       if (!fn)
         return this;
 
-      return this.then(function(rows) {
+      return this.then(function _preprocess(rows) {
         return fn(rows);
       });
     },
@@ -389,7 +389,7 @@
       if (!predicate)
         return this;
 
-      return this.then(function(rows) {
+      return this.then(function _filter(rows) {
         if (_.isFunction(predicate)) {
           return _.filter(rows, predicate);
         }
@@ -411,7 +411,9 @@
       @return {Query}
     */
     groupBy: function groupBy(predicate) {
+      return this.then(function _groupBy(rows) {
         if (!predicate) {
+          // TODO Do this at start of query
           return [{meta: {}, values: rows}];
         }
         else {
@@ -461,13 +463,50 @@
           
           return grouped;
         }
-      }.bind(this));
+      });
     },
 
     reduce: function reduce(predicate) {
-      return this.then(function(groups) {
-        return this._reduce(groups, predicate);
-      }.bind(this));
+      if (!predicate)
+        return this;
+
+      return this.then(function _reduce(results) {
+        var approaches = {
+          avg: function(values, column) {
+            return approaches.sum(values, column) / values.length;
+          },
+          sum: function(values, column) {
+            return _.reduce(values, function(memo, value) {
+              return 0 + memo + value[column];
+            }, 0);
+          }
+        };
+
+        _.each(results, function(result) {
+          var reduced = {};
+
+          if (_.isFunction(predicate.iterator)) {
+            reduced = _.reduce(result.values, predicate.iterator, predicate.memo || {});
+            result.values = [reduced];
+          }
+          else if (predicate.byColumn) {
+            _.each(predicate.byColumn, function(approach, column) {
+              reduced[column] = approaches[approach](result.values, column);
+            });
+
+            result.values = [reduced];
+          }
+          else if (predicate.columns && predicate.approach) {
+            _.each(predicate.columns, function(column) {
+              reduced[column] = approaches[predicate.approach](result.values, column);
+            });
+
+            result.values = [reduced];
+          }
+        });
+
+        return results;
+      });
     },
 
     postprocess: function postprocess(fn) {
@@ -523,53 +562,6 @@
         .reduce(query.reduce)
         .postprocess(query.postprocess)
         .series(query.series);
-    },
-
-    /**
-      Internal implementation of reduce
-
-      @param {Array} results
-      @param {Object} reduce
-      @return {Array}
-    */
-    _reduce: function(results, reduce) {
-      if (reduce) {
-        var approaches = {
-          avg: function(values, column) {
-            return approaches.sum(values, column) / values.length;
-          },
-          sum: function(values, column) {
-            return _.reduce(values, function(memo, value) {
-              return 0 + memo + value[column];
-            }, 0);
-          }
-        };
-
-        _.each(results, function(result) {
-          var reduced = {};
-
-          if (_.isFunction(reduce.iterator)) {
-            reduced = _.reduce(result.values, reduce.iterator, reduce.memo || {});
-            result.values = [reduced];
-          }
-          else if (reduce.byColumn) {
-            _.each(reduce.byColumn, function(approach, column) {
-              reduced[column] = approaches[approach](result.values, column);
-            });
-
-            result.values = [reduced];
-          }
-          else if (reduce.columns && reduce.approach) {
-            _.each(reduce.columns, function(column) {
-              reduced[column] = approaches[reduce.approach](result.values, column);
-            });
-
-            result.values = [reduced];
-          }
-        });
-      }
-
-      return results;
     },
 
     /**
