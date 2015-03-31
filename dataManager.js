@@ -413,8 +413,22 @@
       }.bind(this));
     },
 
-    postprocess: function postprocess() {
-      // TODO
+    postprocess: function postprocess(fn) {
+      if (!fn)
+        return this;
+
+      return this.then(function(groups) {
+        return RSVP.all(_.map(groups, function(group) {
+          return fn(group.values, group.meta);
+        })).then(function(results) {
+          _.each(groups, function(group, index) {
+            if (results[index] != null)
+              group.values = results[index];
+          });
+
+          return groups;
+        });
+      });
     },
 
     series: function series() {
@@ -438,23 +452,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var postprocess = function(groups) {
-        if (query.postprocess) {
-          return RSVP.all(_.map(groups, function(group) {
-            return query.postprocess(group.values, group.meta);
-          })).then(function(results) {
-            _.each(groups, function(group, index) {
-              if (results[index] != null)
-                group.values = results[index];
-            });
-
-            return groups;
-          })
-        }
-        else {
-          return groups;
-        }
-      };
       var series = function(groups) {
         return this._series(groups, query.series);
       }.bind(this);
@@ -469,7 +466,7 @@
         .filter(query.filter)
         .groupBy(query.groupBy)
         .reduce(query.reduce)
-        .then(postprocess)
+        .postprocess(query.postprocess)
         .then(series);
     },
 
