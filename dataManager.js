@@ -407,8 +407,10 @@
       }.bind(this));
     },
 
-    reduce: function reduce() {
-      // TODO
+    reduce: function reduce(predicate) {
+      return this.then(function(groups) {
+        return this._reduce(groups, predicate);
+      }.bind(this));
     },
 
     postprocess: function postprocess() {
@@ -436,9 +438,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var reduce = function(groups) {
-        return this._reduce(groups, query.reduce);
-      }.bind(this);
       var postprocess = function(groups) {
         if (query.postprocess) {
           return RSVP.all(_.map(groups, function(group) {
@@ -469,7 +468,7 @@
         .preprocess(query.preprocess)
         .filter(query.filter)
         .groupBy(query.groupBy)
-        .then(reduce)
+        .reduce(query.reduce)
         .then(postprocess)
         .then(series);
     },
