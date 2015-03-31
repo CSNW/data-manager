@@ -376,8 +376,13 @@
       }.bind(this));
     },
 
-    preprocess: function preprocess() {
-      // TODO
+    preprocess: function preprocess(fn) {
+      if (!fn)
+        return this;
+
+      return this.then(function(rows) {
+        return fn(rows);
+      });
     },
 
     filter: function filter() {
@@ -417,7 +422,6 @@
     calculate: function calculate() {
       var query = this._query;
 
-      var preprocess = query.preprocess || function(rows) { return rows; };
       var filter = function(rows) {
         if (query.filter) {
           if (_.isFunction(query.filter)) {
@@ -466,7 +470,7 @@
           // Return merged rows
           return _.flatten(_.pluck(_.values(data), 'values'));
         })
-        .then(preprocess)
+        .preprocess(query.preprocess)
         .then(filter)
         .then(groupBy)
         .then(reduce)
