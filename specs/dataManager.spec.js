@@ -1,11 +1,14 @@
 (function(d3, _, RSVP, dataManager) {
 
   describe('dataManager', function() {
-    var store, _loadCsv;
-    beforeEach(function() {
-      store = new dataManager.Store();
+    var Store = dataManager.Store;
+    var Query = dataManager.Query;
+    var store, _load;
 
-      _loadCsv = spyOn(store, '_loadCsv').and.callFake(function(path) {
+    beforeEach(function() {
+      store = new Store();
+
+      _load = spyOn(Store, 'load').and.callFake(function(path) {
         return new RSVP.Promise(function(resolve, reject) {
           resolve([{file: path, a: 1.23, b: 4.56}]);
         });
@@ -255,7 +258,7 @@
           addRows('a.csv', []);
 
           store.load(['a.csv', 'b.csv']).then(function() {
-            expect(_loadCsv.calls.count()).toEqual(1);
+            expect(_load.calls.count()).toEqual(1);
 
             expect(store.cache['b.csv']).not.toBeUndefined();
             expect(store.cache['b.csv'].raw.length).toEqual(1);
@@ -268,7 +271,7 @@
             store.load('a.csv'),
             store.load('b.csv')
           ]).then(function() {
-            expect(_loadCsv.calls.count()).toEqual(2);
+            expect(_load.calls.count()).toEqual(2);
           }).then(done, done.fail);
         });
       });
@@ -290,13 +293,13 @@
           {x: 5, y: 50, type: 'positive', file: 'a'},
         ]);
         addRows('b.csv', [
-          {x: -10, y: -100, type: 'negative', file: 'b'}, 
+          {x: -10, y: -100, type: 'negative', file: 'b'},
           {x: 10, y: 100, type: 'positive', file: 'b'}
         ]);
       });
 
       function query(options) {
-        return new dataManager.Query(store, options);
+        return new Query(store, options);
       }
 
       describe('from', function() {
@@ -580,7 +583,7 @@
       var row, test;
       beforeEach(function() {
         row = {
-          a: 10, b: -10, c: 3.14, d: -3.14, e: true, f: false, g: 'testing', h: new Date(2000, 0, 1) 
+          a: 10, b: -10, c: 3.14, d: -3.14, e: true, f: false, g: 'testing', h: new Date(2000, 0, 1)
         };
 
         jasmine.addMatchers({

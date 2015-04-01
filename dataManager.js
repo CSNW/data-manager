@@ -22,6 +22,7 @@
   };
 
   // Type converters for cast
+  // @static
   Store.types = {
     'Number': function(value) {
       return +value;
@@ -37,10 +38,21 @@
     }
   };
 
+  // Load path async (only supports csv currently)
+  // @static
+  Store.load = function(path) {
+    return new RSVP.Promise(function(resolve, reject) {
+      d3.csv(path).get(function(err, rows) {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  };
+
   Store.prototype ={
     /**
       Load values currently in store
-      
+
       @return {Promise}
     */
     values: function() {
@@ -59,40 +71,63 @@
     load: function load(path, options) {
       var paths = _.isArray(path) ? path : [path];
 
-      // Generate _cast and _map
+      // Generate cast and map for options
       options = options || {};
       if (options.cast)
         options._cast = this._generateCast(options.cast);
       if (options.map)
         options._map = this._generateMap(options.map);
 
-      // 1. Load from path (cache or csv)
-      return RSVP
-        .all(_.map(paths, function(path) {
-          return this._load(path, options);
-        }, this))
-        .then(function _doneLoading(rows) {
-          // Process rows for each path
-          _.each(paths, function(path, index) {
-            var cache = this.cache[path];
+      var loading = _.map(paths, function(path) {
+        var cache = this.cache[path];
 
-            // Only update if new values or new cast / map
-            if (cache.raw.length != rows[index].length || options.cast || options.map) {
-              // Store options
-              _.extend(cache, options);
+        if (!cache) {
+          // New path
+          cache = this.cache[path] = {
+            filename: path,
+            raw: [],
+            values: []
+          };
+        }
 
-              // Store raw rows
-              cache.raw = rows[index];
+        // Update cache with options
+        _.extend(cache, options);
 
-              // Store processed rows
+        if (cache.loaded) {
+          // Already loaded, re-cast and map, if necessary
+          if (options.cast || options.map) {
+            cache.loading = new RSVP.Promise(function(resolve, reject) {
+              _.defer(function() {
+                try {
+                  this._processRows(cache);
+
+                  cache.loading = null;
+                  resolve(cache.values);
+                }
+                catch (ex) { reject(ex); }
+              }.bind(this));
+            }.bind(this));
+          }
+        }
+        else if (!cache.loading) {
+          // Hasn't loaded and isn't currently loading -> load
+          cache.loading = Store.load(path)
+            .then(function(raw) {
+              cache.raw = raw;
+
               this._processRows(cache);
 
+              cache.loading = null;
               cache.loaded = new Date();
-            }
+              return cache.values;
+            }.bind(this));
+        }
 
-            delete cache.loading;
-          }, this);
+        return cache.loading;
+      }, this);
 
+      return RSVP.all(loading)
+        .then(function() {
           return _.pick(this.cache, paths);
         }.bind(this));
     },
@@ -100,7 +135,7 @@
     /**
       Register cast options/iterator to be called on every incoming row (before map)
       (e.g. Convert from strings to useful data types)
-      
+
       @param {Object|Function} options or iterator
       @chainable
     */
@@ -250,50 +285,13 @@
 
         return row;
       };
-    },
-
-    // Load (with caching)
-    _load: function _load(path, options) {
-      var cache = this.cache[path];
-
-      if (!cache) {
-        cache = this.cache[path] = {
-          filename: path,
-          raw: [],
-          values: []
-        };
-      }
-      if (cache.loaded) {
-        return new RSVP.Promise(function(resolve) { 
-          resolve(cache.raw); 
-        });
-      }
-      else if (cache.loading) {
-        return cache.loading;
-      }
-      else {
-        var loading = this._loadCsv(path);
-
-        cache.loading = loading;
-        return loading;
-      }
-    },
-
-    // Load csv from given path
-    _loadCsv: function _loadCsv(path) {
-      return new RSVP.Promise(function(resolve, reject) {
-        d3.csv(path).get(function(err, rows) {
-          if (err) return reject(err);
-          resolve(rows);
-        });
-      });
     }
   };
 
   /**
     Query
     Perform query on data store and get formatted series data
-    
+
     Input:
     (Denormalized rows/tables)
     x, y, type, a, b, c
@@ -314,21 +312,21 @@
         // by key
         // ---
         // compare directly: a === true
-        a: true, 
+        a: true,
 
         // comparison: $gt, $gte, $lt, $lte, $ne, $in, $nin
         // b > 10 AND b < 100
-        b: {$gt: 10, $lt: 100} 
-        
+        b: {$gt: 10, $lt: 100}
+
         // compare with logical
         // c > 10 OR c < 100
         c: {$or: {$gt: 10, $lt: 100}}
 
         // by logical
         // ---
-        $and: {a: 10, b: 20}, 
-        $or: {c: 30, d: 40}, 
-        $not: {e: false}, 
+        $and: {a: 10, b: 20},
+        $or: {c: 30, d: 40},
+        $not: {e: false},
         $nor: {f: -10, g: {$in: ['a', 'b', 'c']}}}
       }
     }
@@ -480,7 +478,7 @@
               values: rows
             };
           });
-          
+
           return grouped;
         }
       });
@@ -596,20 +594,20 @@
     @example
     ```js
     var test = {a: 4, b: 3, c: 2, d: 1};
-    
+
     // a = 4 AND b = 2
     matcher({a: 4, b: 3}, test); // -> true
-    
+
     // z = 0 OR b = 3
     matcher({$or: {z: 0, b: 3}}, test); // -> true
-    
+
     // c < 10 AND d >= 1
     matcher({c: {$lt: 10}, d: {$gte: 1}}, test); // -> true
 
     // a in [3, 4, 5] and d != 0
     matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}}, test); // -> true
     ```
-  
+
     @method matcher
     @param {Object} query
     @param {Object} row
@@ -687,7 +685,7 @@
     dataManager.resolve(obj, 'b.d.e'); // -> 3
     dataManager.resolve(obj, 'x.y.z'); // -> undefined
     ```
-  
+
     @method resolve
     @param {Object} obj
     @param {String} key
