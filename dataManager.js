@@ -60,9 +60,10 @@
     cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
       return castFn.call(store, row, index, cache, store.types);
     }), true));
-    cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-      return mapFn.call(store, row, index, cache);
-    }), true));
+
+    cache.values = _.reduce(cache.values, function(memo, row, index) {
+      return mapFn.call(store, memo, row, index, cache);
+    }, []);
 
     return cache.values;
   };
@@ -70,64 +71,75 @@
   // Generate map function for options
   Store.generateMap = function generateMap(options) {
     options = options || {};
-    if (_.isFunction(options)) return options;
-
-    function resolveFromRowOrMapped(row, mapped, key) {
-      var value = resolve(row, key);
-      if (_.isUndefined(value)) {
-        value = resolve(mapped, key);
-      }
-
-      return value;
+    if (_.isFunction(options)) {
+      return function(memo, row, index, details) {
+        memo.push(options.call(this, row, index, details));
+        return memo;
+      };
     }
 
-    return function mapRow(row) {
-      var mappedRows = [{}];
-      var keys = [];
-      _.each(options, function(option, to) {
-        mappedRows = _.compact(_.flatten(_.map(mappedRows, function(mapped) {
-          if (_.isObject(option)) {
-            // Add columns to keys
-            keys = keys.concat(option.columns);
+    // Categorize mapping
+    var simple = [];
+    var complex = [];
+    var keys = [];
+    _.each(options, function(option, to) {
+      if (_.isObject(option)) {
+        complex.push(_.defaults({to: to}, option, {
+          category: '__yColumn'
+        }));
+        keys = keys.concat(option.columns);
+      }
+      else {
+        simple.push({to: to, from: option});
+        keys.push(option);
+      }
+    });
 
-            // Split columns into rows
-            return _.map(option.columns, function(from) {
-              var value = resolveFromRowOrMapped(row, mapped, from);
-              if (!_.isUndefined(value)) {
-                var newRow = _.extend({}, mapped);
-                newRow[to] = value;
+    return function mapRow(memo, row, index, details) {
+      // Copy non-mapped keys from row
+      var mapped = _.omit(row, keys);
 
-                if (option.categories) {
-                  _.extend(newRow, option.categories[from] || {});
-                }
-                else {
-                  newRow[option.category || '__yColumn'] = from;
-                }
-
-                return newRow;
-              }
-              else {
-                return null;
-              }
-            });
-          }
-          else {
-            keys.push(option);
-            mapped[to] = resolveFromRowOrMapped(row, mapped, option);
-            return mapped;
-          }
-        }), true));
+      // First, do simple mapping
+      _.each(simple, function(options) {
+        mapped[options.to] = resolve(row, options.from);
       });
 
-      // Copy non-mapped keys (except for "blank" keys)
-      var copy = _.pick(row, _.difference(_.keys(row), keys, ['']));
-      if (copy) {
-        _.each(mappedRows, function(mapped) {
-          _.extend(mapped, copy);
+      // Then, do complex mapping
+      if (complex.length) {
+        var results = [mapped];
+
+        _.each(complex, function(options) {
+          var prev_results = results;
+          results = [];
+
+          _.each(prev_results, function(mapped) {
+            _.each(options.columns, function(from) {
+              var value = resolve(row, from);
+
+              if (value != null) {
+                var categories = options.categories && options.categories[from];
+
+                var new_row = _.extend({}, mapped, categories);
+                new_row[options.to] = value;
+
+                if (!options.categories)
+                  new_row[options.category] = from;
+
+                results.push(new_row);
+              }
+            });
+          });
+        });
+
+        _.each(results, function(mapped) {
+          memo.push(mapped);
         });
       }
+      else {
+        memo.push(mapped);
+      }
 
-      return mappedRows;
+      return memo;
     };
   };
 
