@@ -14,8 +14,8 @@
     this.types = _.clone(Store.types);
 
     // Set default cast and map functions
-    this._cast = this._generateCast(function(row) { return row; });
-    this._map = this._generateMap(function(row) { return row; });
+    this._cast = Store.generateCast(function(row) { return row; }, this.types);
+    this._map = Store.generateMap(function(row) { return row; });
   };
 
   // Expose Store as DataManager globally and attach static
@@ -50,6 +50,101 @@
     });
   };
 
+  // Process given rows
+  Store.processRows = function processRows(cache, cast, map, context) {
+    var castFn = (cache._cast) || cast;
+    var mapFn = (cache._map) || map;
+
+    // Cast and map rows
+    cache.values = cache.raw;
+    cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
+      return castFn.call(context, row, index, cache);
+    }), true));
+    cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
+      return mapFn.call(context, row, index, cache);
+    }), true));
+
+    return cache.values;
+  };
+
+  // Generate map function for options
+  Store.generateMap = function generateMap(options) {
+    options = options || {};
+    if (_.isFunction(options)) return options;
+
+    function resolveFromRowOrMapped(row, mapped, key) {
+      var value = resolve(row, key);
+      if (_.isUndefined(value)) {
+        value = resolve(mapped, key);
+      }
+
+      return value;
+    }
+
+    return function mapRow(row) {
+      var mappedRows = [{}];
+      var keys = [];
+      _.each(options, function(option, to) {
+        mappedRows = _.compact(_.flatten(_.map(mappedRows, function(mapped) {
+          if (_.isObject(option)) {
+            // Add columns to keys
+            keys = keys.concat(option.columns);
+
+            // Split columns into rows
+            return _.map(option.columns, function(from) {
+              var value = resolveFromRowOrMapped(row, mapped, from);
+              if (!_.isUndefined(value)) {
+                var newRow = _.extend({}, mapped);
+                newRow[to] = value;
+
+                if (option.categories) {
+                  _.extend(newRow, option.categories[from] || {});
+                }
+                else {
+                  newRow[option.category || '__yColumn'] = from;
+                }
+
+                return newRow;
+              }
+              else {
+                return null;
+              }
+            });
+          }
+          else {
+            keys.push(option);
+            mapped[to] = resolveFromRowOrMapped(row, mapped, option);
+            return mapped;
+          }
+        }), true));
+      });
+
+      // Copy non-mapped keys (except for "blank" keys)
+      var copy = _.pick(row, _.difference(_.keys(row), keys, ['']));
+      if (copy) {
+        _.each(mappedRows, function(mapped) {
+          _.extend(mapped, copy);
+        });
+      }
+
+      return mappedRows;
+    };
+  };
+
+  Store.generateCast = function generateCast(options, types) {
+    if (_.isFunction(options)) return options;
+
+    return function castRow(row) {
+      _.each(options, function(type, key) {
+        var cast = _.isFunction(type) ? type : types[type];
+        if (cast)
+          row[key] = cast(row[key]);
+      });
+
+      return row;
+    };
+  };
+
   Store.prototype ={
     /**
       Load values currently in store
@@ -77,9 +172,9 @@
       // Generate cast and map for options
       options = options || {};
       if (options.cast)
-        options._cast = this._generateCast(options.cast);
+        options._cast = Store.generateCast(options.cast, this.types);
       if (options.map)
-        options._map = this._generateMap(options.map);
+        options._map = Store.generateMap(options.map);
 
       var loading = _.map(paths, function(path) {
         var cache = this.cache[path];
@@ -102,7 +197,7 @@
             cache.loading = new RSVP.Promise(function(resolve, reject) {
               _.defer(function() {
                 try {
-                  this._processRows(cache);
+                  Store.processRows(cache, this._cast, this._map, this);
 
                   cache.loading = null;
                   resolve(cache.values);
@@ -118,7 +213,7 @@
             .then(function(raw) {
               cache.raw = raw;
 
-              this._processRows(cache);
+              Store.processRows(cache, this._cast, this._map, this);
 
               cache.loading = null;
               cache.loaded = new Date();
@@ -143,11 +238,11 @@
       @chainable
     */
     cast: function cast(options) {
-      this._cast = this._generateCast(options);
+      this._cast = Store.generateCast(options, this.types);
       _.each(this.cache, function(cache) {
         // Re-process rows as necessary
         if (!cache.cast)
-          this._processRows(cache);
+          Store.processRows(cache, this._cast, this._map, this);
       }, this);
 
       return this;
@@ -178,11 +273,11 @@
       @chainable
     */
     map: function map(options) {
-      this._map = this._generateMap(options);
+      this._map = Store.generateMap(options);
       _.each(this.cache, function(cache) {
         // Re-process rows as necessary
         if (!cache.map)
-          this._processRows(cache);
+          Store.processRows(cache, this._cast, this._map, this);
       }, this);
 
       return this;
@@ -196,102 +291,6 @@
     */
     query: function query(options) {
       return new Query(this, options);
-    },
-
-    // Process given rows
-    _processRows: function _processRows(cache) {
-      var castFn = (cache._cast) || this._cast;
-      var mapFn = (cache._map) || this._map;
-
-      // Cast and map rows
-      cache.values = cache.raw;
-      cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-        return castFn.call(this, row, index, cache);
-      }, this), true));
-      cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-        return mapFn.call(this, row, index, cache);
-      }, this), true));
-
-      return cache.values;
-    },
-
-    // Generate map function for options
-    _generateMap: function _generateMap(options) {
-      options = options || {};
-      if (_.isFunction(options)) return options;
-
-      function resolveFromRowOrMapped(row, mapped, key) {
-        var value = resolve(row, key);
-        if (_.isUndefined(value)) {
-          value = resolve(mapped, key);
-        }
-
-        return value;
-      }
-
-      return function mapRow(row) {
-        var mappedRows = [{}];
-        var keys = [];
-        _.each(options, function(option, to) {
-          mappedRows = _.compact(_.flatten(_.map(mappedRows, function(mapped) {
-            if (_.isObject(option)) {
-              // Add columns to keys
-              keys = keys.concat(option.columns);
-
-              // Split columns into rows
-              return _.map(option.columns, function(from) {
-                var value = resolveFromRowOrMapped(row, mapped, from);
-                if (!_.isUndefined(value)) {
-                  var newRow = _.extend({}, mapped);
-                  newRow[to] = value;
-
-                  if (option.categories) {
-                    _.extend(newRow, option.categories[from] || {});
-                  }
-                  else {
-                    newRow[option.category || '__yColumn'] = from;
-                  }
-
-                  return newRow;
-                }
-                else {
-                  return null;
-                }
-              });
-            }
-            else {
-              keys.push(option);
-              mapped[to] = resolveFromRowOrMapped(row, mapped, option);
-              return mapped;
-            }
-          }), true));
-        });
-
-        // Copy non-mapped keys (except for "blank" keys)
-        var copy = _.pick(row, _.difference(_.keys(row), keys, ['']));
-        if (copy) {
-          _.each(mappedRows, function(mapped) {
-            _.extend(mapped, copy);
-          });
-        }
-
-        return mappedRows;
-      };
-    },
-
-    _generateCast: function _generateCast(options) {
-      if (_.isFunction(options)) return options;
-
-      var types = this.types;
-      return function castRow(row) {
-        _.each(options, function(type, key) {
-          var cast = _.isFunction(type) ? type : types[type];
-          if (cast)
-            row[key] = cast(row[key]);
-        });
-
-        return row;
-      };
     }
   };
 
