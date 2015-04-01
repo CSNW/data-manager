@@ -1,8 +1,8 @@
-(function(d3, _, RSVP, dataManager) {
+(function(d3, _, RSVP, DataManager) {
 
-  describe('dataManager', function() {
-    var Store = dataManager.Store;
-    var Query = dataManager.Query;
+  describe('DataManager', function() {
+    var Store = DataManager.Store;
+    var Query = DataManager.Query;
     var store, _load;
 
     beforeEach(function() {
@@ -591,7 +591,7 @@
             return {
               compare: function(actual, expected) {
                 return {
-                  pass: dataManager.matcher(actual, expected || row),
+                  pass: DataManager.matcher(actual, expected || row),
                   message: 'Expected ' + JSON.stringify(actual) + ' to match ' + JSON.stringify(expected || row)
                 };
               }
@@ -694,7 +694,7 @@
           }
         };
         resolve = function(key) {
-          return dataManager.resolve(fixture, key);
+          return DataManager.resolve(fixture, key);
         };
       });
 
@@ -715,4 +715,4 @@
     });
   });
 
-})(d3, _, RSVP, dataManager);
+})(d3, _, RSVP, DataManager);

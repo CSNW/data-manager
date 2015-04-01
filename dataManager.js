@@ -1,15 +1,12 @@
 (function(_, RSVP, d3, global) {
   'use strict';
 
-  // Attach properties to global data object
-  var dataManager = global.dataManager = {};
-
   /**
     Generic data store with async load, cast, map, and query
 
     @class Store
   */
-  var Store = dataManager.Store = function Store() {
+  var Store = function Store() {
     // Initialize data cache
     this.cache = {};
 
@@ -20,6 +17,10 @@
     this._cast = this._generateCast(function(row) { return row; });
     this._map = this._generateMap(function(row) { return row; });
   };
+
+  // Expose Store as DataManager globally and attach static
+  var DataManager = global.DataManager = Store;
+  DataManager.Store = Store;
 
   // Type converters for cast
   // @static
@@ -40,7 +41,7 @@
 
   // Load path async (only supports csv currently)
   // @static
-  Store.load = function(path) {
+  Store.load = function load(path) {
     return new RSVP.Promise(function(resolve, reject) {
       d3.csv(path).get(function(err, rows) {
         if (err) return reject(err);
@@ -66,6 +67,8 @@
 
       @param {String|Array} path to csv(s)
       @param {Object} [options]
+        @param {Object|Function} [options.cast] cast options/fn for given paths
+        @param {Object|Function} [options.map] map options/fn for given paths
       @return {Promise}
     */
     load: function load(path, options) {
@@ -153,22 +156,25 @@
     /**
       Register map option/iterator to be called with every incoming row
 
-      @param {Object|Function} options or iterator
-      - Example
-        {
-          x: 'year' // (row.year -> row.x)
-          y: {
-            columns: ['a', 'b', 'c'],
-            category: 'type' // row.a -> row.y, row.type = 'a'
-          },
-          z: {
-            columns: ['d', 'e'],
-            categories: {
-              d: {isD: true, isE: false},
-              e: {isD: false, isE: true} // row.d -> row.z, isD: true, isE: false
-            }
+      @example
+      ```js
+      store.map({
+        x: 'year' // (row.year -> row.x)
+        y: {
+          columns: ['a', 'b', 'c'],
+          category: 'type' // row.a -> row.y, row.type = 'a'
+        },
+        z: {
+          columns: ['d', 'e'],
+          categories: {
+            d: {isD: true, isE: false},
+            e: {isD: false, isE: true} // row.d -> row.z, isD: true, isE: false
           }
         }
+      });
+      ```
+
+      @param {Object|Function} options or iterator
       @chainable
     */
     map: function map(options) {
@@ -185,7 +191,7 @@
     /**
       Create new query of data store
 
-      @param {Object} config to pass to query
+      @param {Object} options to pass to query
       @return {Query}
     */
     query: function query(options) {
@@ -335,7 +341,7 @@
     @param {Store} store instance to query
     @param {Object} [query] to run
   */
-  var Query = dataManager.Query = function Query(store, query) {
+  var Query = DataManager.Query = function Query(store, query) {
     this.store = store;
     this.promise = new RSVP.Promise(function load(resolve) {
       resolve(store.cache);
@@ -615,7 +621,7 @@
     @param {String} [lookup] (lookup value for recursion)
     @returns {Boolean}
   */
-  var matcher = dataManager.matcher = function matcher(query, row, lookup) {
+  var matcher = DataManager.matcher = function matcher(query, row, lookup) {
     function value(key, item) {
       var operation = logical[key] || comparison[key];
       if (operation) return operation(item);
@@ -681,10 +687,10 @@
     @example
     ```js
     var obj = {a: 1, b: {c: 2, d: {e: 3}}};
-    dataManager.resolve(obj, 'a'); // -> 1
-    dataManager.resolve(obj, 'b.c'); // -> 2
-    dataManager.resolve(obj, 'b.d.e'); // -> 3
-    dataManager.resolve(obj, 'x.y.z'); // -> undefined
+    DataManager.resolve(obj, 'a'); // -> 1
+    DataManager.resolve(obj, 'b.c'); // -> 2
+    DataManager.resolve(obj, 'b.d.e'); // -> 3
+    DataManager.resolve(obj, 'x.y.z'); // -> undefined
     ```
 
     @method resolve
@@ -692,7 +698,7 @@
     @param {String} key
     @return {Any}
   */
-  var resolve = dataManager.resolve = function resolve(obj, key) {
+  var resolve = DataManager.resolve = function resolve(obj, key) {
     if (!obj) return;
     if (obj[key]) return obj[key];
 
