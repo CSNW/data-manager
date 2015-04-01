@@ -3,23 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>data-manager - Example</title>
+  <title>DataManager - Example</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-  <h1>data-manager</h1>
+  <h1>DataManager - Example</h1>
 
   <script src="../bower_components/underscore/underscore.js"></script>
   <script src="../bower_components/rsvp/rsvp.js"></script>
   <script src="../bower_components/d3/d3.js"></script>
-  <script src="../dataManager.js"></script>
+  <script src="../DataManager.js"></script>
 
-  <script src="../bower_components/jquery/dist/jquery.js"></script>
   <script type="text/javascript">
-    dataManager.log.enable = true;
-
-    var store = new dataManager.Store();
+    var store = new DataManager.Store();
     store.cast({
       a: 'Number',
       b: 'Number',
@@ -35,34 +32,14 @@
       }
     });
 
-    store.subscribe(function(values) {
-      console.log('store', values);
-    });
-
     var query = store.query({
       from: 'data/a.csv',
       filter: {
         type: 'b'
       }
-    });
-
-    query.subscribe(function(values) {
+    }).then(function(values) {
       console.log('query', values);
     });
-
-    var files = ['data/a.csv', 'data/b.csv', 'data/c.csv', 'data/d.csv', 'data/e.csv'];
-    var updateCount = 1;
-    function update() {
-      if (updateCount++ > 5)
-        updateCount = 1;
-
-      query.update({
-        from: files.slice(0, updateCount),
-        filter: {
-          type: query._query.filter.type == 'b' ? 'c' : 'b'
-        }
-      });
-    }
   </script>
 </body>
 </html>
