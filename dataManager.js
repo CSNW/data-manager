@@ -141,7 +141,11 @@
     */
     cast: function cast(options) {
       this._cast = this._generateCast(options);
-      this._process();
+      _.each(this.cache, function(cache) {
+        // Re-process rows as necessary
+        if (!cache.cast)
+          this._processRows(cache);
+      }, this);
 
       return this;
     },
@@ -169,7 +173,11 @@
     */
     map: function map(options) {
       this._map = this._generateMap(options);
-      this._process();
+      _.each(this.cache, function(cache) {
+        // Re-process rows as necessary
+        if (!cache.map)
+          this._processRows(cache);
+      }, this);
 
       return this;
     },
@@ -182,13 +190,6 @@
     */
     query: function query(options) {
       return new Query(this, options);
-    },
-
-    // Process all data
-    _process: function _process() {
-      _.each(this.cache, function(cache, path) {
-        this._processRows(cache);
-      }, this);
     },
 
     // Process given rows
@@ -703,14 +704,11 @@
 
   // Create a key for groupBy using key:value format
   function quickKey(row, keys, values) {
-    var key = '';
+    var key = [];
     for (var i = 0, l = keys.length; i < l; i++) {
-      if (key.length > 0)
-        key += '&';
-
-      key += keys[i] + ':' + values[i](row);
+      key.push(keys[i] + ':' + values[i](row));
     }
-    return key;
+    return key.join('&');
   }
 
 })(_, RSVP, d3, this);
