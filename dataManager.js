@@ -14,7 +14,7 @@
     this.types = _.clone(Store.types);
 
     // Set default cast and map functions
-    this._cast = Store.generateCast(function(row) { return row; }, this.types);
+    this._cast = Store.generateCast(function(row) { return row; });
     this._map = Store.generateMap(function(row) { return row; });
   };
 
@@ -51,17 +51,17 @@
   };
 
   // Process given rows
-  Store.processRows = function processRows(cache, cast, map, context) {
-    var castFn = (cache._cast) || cast;
-    var mapFn = (cache._map) || map;
+  Store.processRows = function processRows(cache, store) {
+    var castFn = (cache._cast) || store._cast;
+    var mapFn = (cache._map) || store._map;
 
     // Cast and map rows
     cache.values = cache.raw;
     cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-      return castFn.call(context, row, index, cache);
+      return castFn.call(store, row, index, cache, store.types);
     }), true));
     cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-      return mapFn.call(context, row, index, cache);
+      return mapFn.call(store, row, index, cache);
     }), true));
 
     return cache.values;
@@ -131,10 +131,10 @@
     };
   };
 
-  Store.generateCast = function generateCast(options, types) {
+  Store.generateCast = function generateCast(options) {
     if (_.isFunction(options)) return options;
 
-    return function castRow(row) {
+    return function castRow(row, index, details, types) {
       _.each(options, function(type, key) {
         var cast = _.isFunction(type) ? type : types[type];
         if (cast)
@@ -172,7 +172,7 @@
       // Generate cast and map for options
       options = options || {};
       if (options.cast)
-        options._cast = Store.generateCast(options.cast, this.types);
+        options._cast = Store.generateCast(options.cast);
       if (options.map)
         options._map = Store.generateMap(options.map);
 
@@ -197,7 +197,7 @@
             cache.loading = new RSVP.Promise(function(resolve, reject) {
               _.defer(function() {
                 try {
-                  Store.processRows(cache, this._cast, this._map, this);
+                  Store.processRows(cache, this);
 
                   cache.loading = null;
                   resolve(cache.values);
@@ -213,7 +213,7 @@
             .then(function(raw) {
               cache.raw = raw;
 
-              Store.processRows(cache, this._cast, this._map, this);
+              Store.processRows(cache, this);
 
               cache.loading = null;
               cache.loaded = new Date();
@@ -238,11 +238,11 @@
       @chainable
     */
     cast: function cast(options) {
-      this._cast = Store.generateCast(options, this.types);
+      this._cast = Store.generateCast(options);
       _.each(this.cache, function(cache) {
         // Re-process rows as necessary
         if (!cache.cast)
-          Store.processRows(cache, this._cast, this._map, this);
+          Store.processRows(cache, this);
       }, this);
 
       return this;
@@ -277,7 +277,7 @@
       _.each(this.cache, function(cache) {
         // Re-process rows as necessary
         if (!cache.map)
-          Store.processRows(cache, this._cast, this._map, this);
+          Store.processRows(cache, this);
       }, this);
 
       return this;
