@@ -1,15 +1,15 @@
 {
-  "name": "data-manager",
-  "main": "dataManager.js",
+  "name": "DataManager",
+  "main": "DataManager.js",
   "version": "0.5.7",
-  "homepage": "https://github.com/CSNW/data-manager",
+  "homepage": "https://github.com/CSNW/DataManager",
   "authors": [
     "CSNW",
     "Tim Hall <tim.hall.engr@gmail.com>"
   ],
   "description": "Advanced querying and processing for csv data",
   "keywords": [
-    "dataManager",
+    "DataManager",
     "data",
     "manager",
     "store",

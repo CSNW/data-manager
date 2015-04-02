@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>DataManager - Performance</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h1>DataManager - Performance</h1>
+
+  <script src="../bower_components/underscore/underscore.js"></script>
+  <script src="../bower_components/rsvp/rsvp.js"></script>
+  <script src="../bower_components/d3/d3.js"></script>
+  <script src="../DataManager.js"></script>
+
+  <script type="text/javascript">
+    var store = new DataManager.Store();
+
+    var steps = new RSVP.Promise(function(resolve) { resolve(); });
+    var count = 1;
+    function step(description, fn) {
+      steps = steps.then(function() {
+        console.log('\n' + count++ + '. ' + description);
+        console.time(description);
+
+        if (fn.length) {
+          // Async test
+          return fn(function done() {
+            console.timeEnd(description);
+          });
+        }
+        else {
+          fn();
+          console.timeEnd(description);
+        }
+      });
+    }
+
+    // Load
+    step('load', function(done) {
+      return store.load('data/massive.csv').then(done);
+    });
+
+    // Cast
+    step('cast', function() {
+      store.cast({
+        line: 'Number',
+        a: 'Number',
+        b: 'String',
+        c: 'Boolean',
+        d: 'Number',
+        e: 'String'
+      });
+    });
+
+    // Map (simple)
+    step('map (simple)', function() {
+      store.map({
+        y: 'a',
+        y2: 'd'
+      });
+    });
+
+    // Map (complex)
+    step('map (complex)', function() {
+      store.map({
+        y: {
+          columns: ['a', 'd'],
+          category: 'type'
+        }
+      });
+    });
+
+    steps = steps.then(function() { console.log('\nDONE!'); });
+  </script>
+</body>
+</html>

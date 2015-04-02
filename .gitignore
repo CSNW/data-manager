@@ -3,7 +3,6 @@ bower_components
 .grunt
 specs/index.html
 npm-debug.log
-performance
 
 # OS Junk
 Thumbs.db
