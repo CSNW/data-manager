@@ -1,18 +1,18 @@
 {
-  "name": "data-manager",
+  "name": "DataManager",
   "version": "0.5.7",
   "description": "Advanced querying and processing for csv data",
-  "main": "dataManager.js",
+  "main": "DataManager.js",
   "scripts": {
     "test": "node -e \"require('grunt').tasks(['test']);\"",
     "jshint": "node -e \"require('grunt').tasks(['jshint']);\""
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/CSNW/data-manager.git"
+    "url": "https://github.com/CSNW/DataManager.git"
   },
   "keywords": [
-    "dataManager",
+    "DataManager",
     "data",
     "manager",
     "store",
@@ -21,9 +21,9 @@
   ],
   "author": "CSNW",
   "bugs": {
-    "url": "https://github.com/CSNW/data-manager/issues"
+    "url": "https://github.com/CSNW/DataManager/issues"
   },
-  "homepage": "https://github.com/CSNW/data-manager",
+  "homepage": "https://github.com/CSNW/DataManager",
   "license": "MIT",
   "devDependencies": {
     "grunt": "~0.4.5",

@@ -33,7 +33,7 @@ module.exports = function(grunt) {
       },
 
       src: {
-        src: 'dataManager.js',
+        src: 'DataManager.js',
         options: {
           keepRunner: true,
           outfile: 'specs/index.html'
@@ -41,7 +41,7 @@ module.exports = function(grunt) {
       },
 
       build: {
-        src: 'dataManager.min.js',
+        src: 'DataManager.min.js',
         options: {
           keepRunner: false
         }
@@ -53,9 +53,9 @@ module.exports = function(grunt) {
         'jshintrc': '.jshintrc'
       },
 
-      src: ['dataManager.js'],
+      src: ['DataManager.js'],
       specs: ['specs/*.spec.js'],
-      build: ['dataManager.min.js']
+      build: ['DataManager.min.js']
     },
 
     uglify: {
@@ -75,18 +75,18 @@ module.exports = function(grunt) {
 
     watch: {
       jshint: {
-        files: ['dataManager.js'],
+        files: ['DataManager.js'],
         tasks: ['jshint:src']
       },
       test: {
-        files: ['dataManager.js', 'specs/**/*.js'],
+        files: ['DataManager.js', 'specs/**/*.js'],
         tasks: ['test']
       }
     }
   });
 
   this.registerTask('default', ['test']);
-  
+
   this.registerTask('test', 'jshing and run specs', [
     'jshint:src',
     'jshint:specs',
