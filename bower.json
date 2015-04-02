@@ -1,7 +1,7 @@
 {
   "name": "DataManager",
   "main": "DataManager.js",
-  "version": "0.5.7",
+  "version": "0.6.0",
   "homepage": "https://github.com/CSNW/DataManager",
   "authors": [
     "CSNW",
