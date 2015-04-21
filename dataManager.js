@@ -69,6 +69,14 @@
   };
 
   // Generate map function for options
+  function omit(obj, keys) {
+    var copy = {};
+    for (var key in obj) {
+      if (!_.contains(keys, key))
+        copy[key] = obj[key];
+    }
+    return copy;
+  }
   Store.generateMap = function generateMap(options) {
     options = options || {};
     if (_.isFunction(options)) {
@@ -97,7 +105,7 @@
 
     return function mapRow(memo, row, index, details) {
       // Copy non-mapped keys from row
-      var mapped = _.omit(row, keys);
+      var mapped = omit(row, keys);
 
       // First, do simple mapping
       _.each(simple, function(options) {
