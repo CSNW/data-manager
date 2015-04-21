@@ -57,10 +57,9 @@
 
     // Cast and map rows
     cache.values = cache.raw;
-    cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
+    cache.values = _.compact(_.map(cache.values, function(row, index) {
       return castFn.call(store, row, index, cache, store.types);
-    }), true));
-
+    }));
     cache.values = _.reduce(cache.values, function(memo, row, index) {
       return mapFn.call(store, memo, row, index, cache);
     }, []);
