@@ -164,7 +164,7 @@
     };
   };
 
-  Store.prototype ={
+  _.extend(Store.prototype, {
     /**
       Load values currently in store
 
@@ -311,7 +311,7 @@
     query: function query(options) {
       return new Query(this, options);
     }
-  };
+  });
 
   /**
     Query
@@ -389,7 +389,7 @@
     }
   };
 
-  Query.prototype ={
+  _.extend(Query.prototype, {
     // Proxy promise methods
     then: function() {
       this.promise = this.promise.then.apply(this.promise, arguments);
@@ -608,7 +608,7 @@
         }
       });
     }
-  };
+  });
 
   /**
     Matching helper for advanced querying
