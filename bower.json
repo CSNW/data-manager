@@ -19,8 +19,8 @@
   "private": true,
   "dependencies": {
     "rsvp": "~3",
-    "underscore": "~1",
-    "d3": "~3"
+    "d3": "~3",
+    "lodash": "~3.7.0"
   },
   "license": "MIT",
   "ignore": [
