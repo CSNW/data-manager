@@ -1,6 +1,17 @@
 (function(_, RSVP, d3, global) {
   'use strict';
 
+  var utils = {
+    omit: function omit(obj, keys) {
+      var copy = {};
+      for (var key in obj) {
+        if (!_.contains(keys, key))
+          copy[key] = obj[key];
+      }
+      return copy;
+    }
+  };
+
   /**
     Generic data store with async load, cast, map, and query
 
@@ -68,14 +79,7 @@
   };
 
   // Generate map function for options
-  function omit(obj, keys) {
-    var copy = {};
-    for (var key in obj) {
-      if (!_.contains(keys, key))
-        copy[key] = obj[key];
-    }
-    return copy;
-  }
+  
   Store.generateMap = function generateMap(options) {
     options = options || {};
     if (_.isFunction(options)) {
@@ -104,7 +108,7 @@
 
     return function mapRow(memo, row, index, details) {
       // Copy non-mapped keys from row
-      var mapped = omit(row, keys);
+      var mapped = utils.omit(row, keys);
 
       // First, do simple mapping
       _.each(simple, function(options) {
@@ -733,6 +737,9 @@
       key.push(keys[i] + ':' + values[i](row));
     }
     return key.join('&');
-  }
+  };
+
+  // Expose utils
+  DataManager.utils = utils;
 
 })(_, RSVP, d3, this);
