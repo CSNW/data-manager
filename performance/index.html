@@ -9,6 +9,7 @@
 </head>
 <body>
   <h1>DataManager - Performance</h1>
+  <button id="run">Run</button><span id="status" style="margin-left: 10px;"></span>
 
   <script src="../bower_components/lodash/lodash.js"></script>
   <script src="../bower_components/rsvp/rsvp.js"></script>
@@ -16,64 +17,85 @@
   <script src="../DataManager.js"></script>
 
   <script type="text/javascript">
-    var store = new DataManager.Store();
+    document.addEventListener('DOMContentLoaded', function() {
+      var button = document.getElementById('run');
+      var status = document.getElementById('status');
+      button.addEventListener('click', function() {
+        status.innerHTML = '';
+        button.innerHTML = 'Running...';
+        button.disabled = true;
+        run().then(function() {
+          status.innerHTML = 'DONE!';
+          button.innerHTML = 'Run';
+          button.disabled = false;
+        });
+      }, false);  
+    });
 
-    var steps = new RSVP.Promise(function(resolve) { resolve(); });
-    var count = 1;
-    function step(description, fn) {
-      steps = steps.then(function() {
-        console.log('\n' + count++ + '. ' + description);
-        console.time(description);
+    function run() {
+      var store = new DataManager.Store();
 
-        if (fn.length) {
-          // Async test
-          return fn(function done() {
+      var steps = new RSVP.Promise(function(resolve) { resolve(); });
+      var count = 1;
+      function step(description, fn) {
+        steps = steps.then(function() {
+          console.log('\n' + count++ + '. ' + description);
+          console.time(description);
+
+          if (fn.length) {
+            // Async test
+            return fn(function done() {
+              console.timeEnd(description);
+            });
+          }
+          else {
+            fn();
             console.timeEnd(description);
-          });
-        }
-        else {
-          fn();
-          console.timeEnd(description);
-        }
+          }
+        });
+      }
+
+      // Load
+      step('load', function(done) {
+        return store.load('data/massive.csv').then(done);
       });
+
+      // Cast
+      step('cast', function() {
+        store.cast({
+          line: 'Number',
+          a: 'Number',
+          b: 'String',
+          c: 'Boolean',
+          d: 'Number',
+          e: 'String'
+        });
+      });
+
+      // Map (simple)
+      step('map (simple)', function() {
+        store.map({
+          y: 'a',
+          y2: 'd'
+        });
+      });
+
+      // Map (complex)
+      step('map (complex)', function() {
+        store.map({
+          y: {
+            columns: ['a', 'd'],
+            category: 'type'
+          }
+        });
+      });
+
+      steps = steps.then(function() { 
+        console.log('\nDONE!');
+      });
+
+      return steps;
     }
-
-    // Load
-    step('load', function(done) {
-      return store.load('data/massive.csv').then(done);
-    });
-
-    // Cast
-    step('cast', function() {
-      store.cast({
-        line: 'Number',
-        a: 'Number',
-        b: 'String',
-        c: 'Boolean',
-        d: 'Number',
-        e: 'String'
-      });
-    });
-
-    // Map (simple)
-    step('map (simple)', function() {
-      store.map({
-        y: 'a',
-        y2: 'd'
-      });
-    });
-
-    // Map (complex)
-    step('map (complex)', function() {
-      store.map({
-        y: {
-          columns: ['a', 'd'],
-          category: 'type'
-        }
-      });
-    });
-
-    steps = steps.then(function() { console.log('\nDONE!'); });
   </script>
 </body>
 </html>
