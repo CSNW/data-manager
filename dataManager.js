@@ -2,6 +2,13 @@
   'use strict';
 
   var utils = {
+    cloneObject: function cloneObject(obj) {
+      var cloned = {};
+      for (var key in obj) {
+        cloned[key] = obj[key];
+      }
+      return cloned;
+    },
     omit: function omit(obj, keys) {
       var copy = {};
       for (var key in obj) {
@@ -25,7 +32,7 @@
     this.types = _.clone(Store.types);
 
     // Set default cast and map functions
-    this._cast = Store.generateCast(function(row) { return row; });
+    this._cast = Store.generateCast(utils.cloneObject);
     this._map = Store.generateMap(function(row) { return row; });
   };
 
@@ -106,14 +113,35 @@
       }
     });
 
+    function compile(row) {
+      var fn_body = '';
+      _.each(simple, function(options) {
+        fn_body += 'row[\'' + options.to + '\'] = resolve(row, \'' + options.from + '\');\n';
+      });
+
+      var fn = new Function('row', 'resolve', fn_body);
+
+      return function(row) {
+        return fn(row, resolve);
+      }
+    }
+
+    var compiled;
+    if (simple.length) {
+      compiled = function(row) {
+        var fn = compile(row);
+
+        compiled = fn;
+        return fn(row);
+      };
+    }
+
     return function mapRow(memo, row, index, details) {
-      // Copy non-mapped keys from row
-      var mapped = utils.omit(row, keys);
+      var mapped = row;
 
       // First, do simple mapping
-      _.each(simple, function(options) {
-        mapped[options.to] = resolve(row, options.from);
-      });
+      if (compiled)
+        compiled(mapped);
 
       // Then, do complex mapping
       if (complex.length) {
@@ -171,16 +199,16 @@
     //   'b': cast_options['b'](row['b'], index, details),
     //   'c': cast_options['c'](row['c'], index, details)
     // };
-    var function_body = 'return {\n';
+    var fn_body = 'return {\n';
     _.each(_.keys(cast_options), function(key, index) {
-      function_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n';
+      fn_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n';
     });
-    function_body += '\n};';
+    fn_body += '\n};';
 
-    var cast = new Function('cast_options', 'row', 'index', 'details', function_body);
+    var fn = new Function('cast_options', 'row', 'index', 'details', fn_body);
 
     return function castRow(row, index, details) {
-      return cast(cast_options, row, index, details);
+      return fn(cast_options, row, index, details);
     };
   };
 
