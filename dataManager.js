@@ -69,7 +69,7 @@
     // Cast and map rows
     cache.values = cache.raw;
     cache.values = _.compact(_.map(cache.values, function(row, index) {
-      return castFn.call(store, row, index, cache, store.types);
+      return castFn.call(store, row, index, cache);
     }));
     cache.values = _.reduce(cache.values, function(memo, row, index) {
       return mapFn.call(store, memo, row, index, cache);
@@ -154,17 +154,33 @@
     };
   };
 
-  Store.generateCast = function generateCast(options) {
+  Store.generateCast = function generateCast(options, types) {
     if (_.isFunction(options)) return options;
 
-    return function castRow(row, index, details, types) {
-      _.each(options, function(type, key) {
-        var cast = _.isFunction(type) ? type : types[type];
-        if (cast)
-          row[key] = cast(row[key]);
-      });
+    // Load type functions for options
+    var cast_options = {};
+    _.each(options, function(type, key) {
+      cast_options[key] = _.isFunction(type) ? type : types[type];
+    });
 
-      return row;
+    // Create cast function that sets properties directly instead of with iterator
+    //
+    // Example:
+    // return {
+    //   'a': cast_options['a'](row['a'], index, details),
+    //   'b': cast_options['b'](row['b'], index, details),
+    //   'c': cast_options['c'](row['c'], index, details)
+    // };
+    var function_body = 'return {\n';
+    _.each(_.keys(cast_options), function(key, index) {
+      function_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n'
+    })
+    function_body += '\n};';
+
+    var cast = new Function('cast_options', 'row', 'index', 'details', function_body);
+
+    return function castRow(row, index, details) {
+      return cast(cast_options, row, index, details);
     };
   };
 
@@ -195,7 +211,7 @@
       // Generate cast and map for options
       options = options || {};
       if (options.cast)
-        options._cast = Store.generateCast(options.cast);
+        options._cast = Store.generateCast(options.cast, this.types);
       if (options.map)
         options._map = Store.generateMap(options.map);
 
@@ -261,7 +277,7 @@
       @chainable
     */
     cast: function cast(options) {
-      this._cast = Store.generateCast(options);
+      this._cast = Store.generateCast(options, this.types);
       _.each(this.cache, function(cache) {
         // Re-process rows as necessary
         if (!cache.cast)

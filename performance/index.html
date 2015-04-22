@@ -32,6 +32,10 @@
       }, false);  
     });
 
+    RSVP.on('error', function(err) {
+      console.log(err);
+    });
+
     function run() {
       var store = new DataManager.Store();
 
