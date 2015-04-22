@@ -173,8 +173,8 @@
     // };
     var function_body = 'return {\n';
     _.each(_.keys(cast_options), function(key, index) {
-      function_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n'
-    })
+      function_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n';
+    });
     function_body += '\n};';
 
     var cast = new Function('cast_options', 'row', 'index', 'details', function_body);
@@ -457,9 +457,8 @@
           return _.filter(rows, predicate);
         }
         else {
-          return _.filter(rows, function(row) {
-            return matcher(predicate, row);
-          });
+          var matches = matcher(predicate);
+          return _.filter(rows, matches);
         }
       });
     },
@@ -619,8 +618,9 @@
 
         function createSeries(series) {
           // Find matching result and load values for series
+          var matches = matcher(series.meta);
           var result = _.find(results, function(result) {
-            return matcher(series.meta, result.meta);
+            return matches(result.meta);
           });
 
           series.values = (result && result.values) || [];
@@ -641,82 +641,107 @@
     var test = {a: 4, b: 3, c: 2, d: 1};
 
     // a = 4 AND b = 2
-    matcher({a: 4, b: 3}, test); // -> true
+    matcher({a: 4, b: 3})(test); // -> true
 
     // z = 0 OR b = 3
-    matcher({$or: {z: 0, b: 3}}, test); // -> true
+    matcher({$or: {z: 0, b: 3}})(test); // -> true
 
     // c < 10 AND d >= 1
-    matcher({c: {$lt: 10}, d: {$gte: 1}}, test); // -> true
+    matcher({c: {$lt: 10}, d: {$gte: 1}})(test); // -> true
 
     // a in [3, 4, 5] and d != 0
-    matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}}, test); // -> true
+    matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}})(test); // -> true
     ```
 
     @method matcher
     @param {Object} query
-    @param {Object} row
-    @param {String} [lookup] (lookup value for recursion)
-    @returns {Boolean}
+    @returns {Function}
   */
-  var matcher = DataManager.matcher = function matcher(query, row, lookup) {
-    function value(key, item) {
-      var operation = logical[key] || comparison[key];
-      if (operation) return operation(item);
 
-      // If query is given for row key, match recursively with lookup
-      // otherwise compare with equals
-      // TODO Not too slow, but look into non-recursive approach
-      var isQuery = _.isObject(item) && !(item instanceof Date) && !_.isArray(item);
-      if (isQuery) return matcher(item, row, key);
-      else return _.isEqual(resolve(row, key), item);
+  var matcher = DataManager.matcher = function matcher(query) {
+    function resolve(key) {
+      return 'resolve(row, \'' + key + '\')';
+    }
+    function getValue(value) {
+      if (_.isString(value))
+        return '\'' + value + '\'';
+      else if (value instanceof Date)
+        return 'new Date(\'' + value.toJSON() + '\')';
+      else if (_.isObject(value))
+        return JSON.stringify(value);
+      else
+        return value;
+    }
+    function equal(key, value) {
+      return 'equal(' + resolve(key) + ', ' + getValue(value) + ')';
+    }
+    function indexOf(key, value) {
+      return 'indexOf(' + getValue(value) + ', ' + resolve(key) + ')';
+    }
+
+    function result(key, value, lookup) {
+      var operation = logical[key] || comparison[key];
+      if (operation)
+        return operation(value, lookup);
+
+      var is_query = _.isObject(value) && !(value instanceof Date) && !_.isArray(value);
+      if (is_query)
+        return result('$and', value, key);
+      else
+        return equal(key, value);
     }
 
     var logical = {
-      '$and': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result && value(key, item);
-        }, true);
+      '$and': function logical_and(query, lookup) {
+        return '(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && (') + ')';
       },
-      '$or': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result || value(key, item);
-        }, false);
+      '$or': function logical_or(query, lookup) {
+        return '(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') || (') + ')';
       },
-      '$not': function(query) {
-        return !logical['$and'](query);
+      '$not': function logical_not(query, lookup) {
+        return '!((' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && (') + '))';
       },
-      '$nor': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result && !value(key, item);
-        }, true);
-      }
-    };
-    var comparison = {
-      '$gt': function(value) {
-        return resolve(row, lookup) > value;
-      },
-      '$gte': function(value) {
-        return resolve(row, lookup) >= value;
-      },
-      '$lt': function(value) {
-        return resolve(row, lookup) < value;
-      },
-      '$lte': function(value) {
-        return resolve(row, lookup) <= value;
-      },
-      '$in': function(value) {
-        return _.indexOf(value, resolve(row, lookup)) >= 0;
-      },
-      '$ne': function(value) {
-        return resolve(row, lookup) !== value;
-      },
-      '$nin': function(value) {
-        return _.indexOf(value, resolve(row, lookup)) === -1;
+      '$nor': function logical_nor(query, lookup) {
+        return '!(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && !(') + ')';
       }
     };
 
-    return logical['$and'](query);
+    var comparison = {
+      '$gt': function comparison_gt(value, lookup) {
+        return resolve(lookup) + ' > ' + getValue(value);
+      },
+      '$gte': function comparison_gte(value, lookup) {
+        return resolve(lookup) + ' >= ' + getValue(value);
+      },
+      '$lt': function comparison_lt(value, lookup) {
+        return resolve(lookup) + ' < ' + getValue(value);
+      },
+      '$lte': function comparison_lte(value, lookup) {
+        return resolve(lookup) + ' <= ' + getValue(value);
+      },
+      '$in': function comparison_in(value, lookup) {
+        return indexOf(lookup, value) + ' >= 0';
+      },
+      '$ne': function comparison_ne(value, lookup) {
+        return '!' + equal(lookup, value);
+      },
+      '$nin': function comparison_nin(value, lookup) {
+        return indexOf(lookup, value) + ' === -1';
+      }
+    };
+
+    var fn = new Function('row', 'resolve', 'equal', 'indexOf', 'return ' + result('$and', query) + ';');
+    return function(row) {
+      return fn(row, DataManager.resolve, _.isEqual, _.indexOf);
+    };
   };
 
   /**
@@ -753,7 +778,7 @@
       key.push(keys[i] + ':' + values[i](row));
     }
     return key.join('&');
-  };
+  }
 
   // Expose utils
   DataManager.utils = utils;

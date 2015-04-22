@@ -20,7 +20,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       var button = document.getElementById('run');
       var status = document.getElementById('status');
-      button.addEventListener('click', function() {
+
+      function runSteps() {
         status.innerHTML = '';
         button.innerHTML = 'Running...';
         button.disabled = true;
@@ -29,7 +30,10 @@
           button.innerHTML = 'Run';
           button.disabled = false;
         });
-      }, false);  
+      }
+      button.addEventListener('click', runSteps, false);
+
+      runSteps();
     });
 
     RSVP.on('error', function(err) {
@@ -37,7 +41,7 @@
     });
 
     function run() {
-      var store = new DataManager.Store();
+      var store = window.store = new DataManager.Store();
 
       var steps = new RSVP.Promise(function(resolve) { resolve(); });
       var count = 1;
@@ -91,6 +95,35 @@
             columns: ['a', 'd'],
             category: 'type'
           }
+        });
+      });
+  
+      step('filter (function)', function(done) {
+        return store.query({
+          filter: function(row) {
+            return row.y > 50 && row.c === true;
+          }
+        }).then(function(results) {
+          var num_results = results[0].values.length;
+          if (num_results != 37181)
+            console.log('filter != 37181:', num_results);
+
+          done();
+        });
+      });
+
+      step('filter (matcher)', function(done) {
+        return store.query({
+          filter: {
+            y: {$gt: 50},
+            c: true
+          }
+        }).then(function(results) {
+          var num_results = results[0].values.length;
+          if (num_results != 37181)
+            console.log('filter != 37181:', num_results);
+
+          done();
         });
       });
 

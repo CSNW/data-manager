@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       options: {
         specs: ['specs/**/*.spec.js'],
         vendor: [
-          'bower_components/underscore/underscore.js',
+          'bower_components/lodash/lodash.js',
           'bower_components/rsvp/rsvp.js',
           'bower_components/d3/d3.js'
         ]

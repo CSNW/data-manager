@@ -590,8 +590,9 @@
           matches: function(util) {
             return {
               compare: function(actual, expected) {
+                var matches = DataManager.matcher(actual);
                 return {
-                  pass: DataManager.matcher(actual, expected || row),
+                  pass: matches(expected || row),
                   message: 'Expected ' + JSON.stringify(actual) + ' to match ' + JSON.stringify(expected || row)
                 };
               }
