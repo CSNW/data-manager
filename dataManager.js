@@ -12,10 +12,6 @@
 
     // Load types from static
     this.types = _.clone(Store.types);
-
-    // Set default cast and map functions
-    this._cast = Store.generateCast(function(row) { return row; });
-    this._map = Store.generateMap(function(row) { return row; });
   };
 
   // Expose Store as DataManager globally and attach static
@@ -29,10 +25,10 @@
       return +value;
     },
     'Boolean': function(value) {
-      return _.isString(value) ? value.toUpperCase() === 'TRUE' : (value === 1 || value === true);
+      return value.toUpperCase ? value.toUpperCase() === 'TRUE' : (value === 1 || value === true);
     },
     'String': function(value) {
-      return _.isUndefined(value) ? '' : '' + value;
+      return value == null ? '' : '' + value;
     },
     'Date': function(value) {
       return new Date(value);
@@ -51,113 +47,188 @@
   };
 
   // Process given rows
+  // @static
   Store.processRows = function processRows(cache, store) {
-    var castFn = (cache._cast) || store._cast;
-    var mapFn = (cache._map) || store._map;
+    var castFn = cache._cast || store._cast;
+    var mapFn = cache._map || store._map;
 
-    // Cast and map rows
-    cache.values = cache.raw;
-    cache.values = _.compact(_.flatten(_.map(cache.values, function(row, index) {
-      return castFn.call(store, row, index, cache, store.types);
-    }), true));
+    if (castFn || mapFn) {
+      var values = cache.values;
+      var index = -1;
+      var length = values.length;
+      var count = mapFn ? mapFn.count : 1;
+      var results = new Array(length * count);
 
-    cache.values = _.reduce(cache.values, function(memo, row, index) {
-      return mapFn.call(store, memo, row, index, cache);
-    }, []);
+      while (++index < length) {
+        if (castFn)
+          results[index * count] = castFn(values[index], index, cache);
+        else
+          results[index * count] = values[index];
+
+        if (mapFn)
+          mapFn(results, index * count, results[index * count], index, cache);
+      }
+
+      cache.values = results;
+    }
 
     return cache.values;
   };
 
-  // Generate map function for options
+  // Generate map function for given options
+  // @static
   Store.generateMap = function generateMap(options) {
     options = options || {};
+    var mapRow;
+
     if (_.isFunction(options)) {
-      return function(memo, row, index, details) {
-        memo.push(options.call(this, row, index, details));
-        return memo;
+      mapRow = function mapRow(out, cursor, row, index, details) {
+        out[cursor] = options(row, index, details);
       };
+      mapRow.count = 1;
+      return mapRow;
     }
 
     // Categorize mapping
     var simple = [];
     var complex = [];
-    var keys = [];
     _.each(options, function(option, to) {
-      if (_.isObject(option)) {
-        complex.push(_.defaults({to: to}, option, {
-          category: '__yColumn'
-        }));
-        keys = keys.concat(option.columns);
-      }
-      else {
+      if (_.isObject(option))
+        complex.push(_.extend({to: to}, option));
+      else
         simple.push({to: to, from: option});
-        keys.push(option);
-      }
     });
 
-    return function mapRow(memo, row, index, details) {
-      // Copy non-mapped keys from row
-      var mapped = _.omit(row, keys);
+    // Flatten complex mapping
+    if (complex.length) {
+      complex = _.reduce(complex, function(memo, options) {
+        return _.chain(memo)
+          .map(function(existing) {
+            return _.map(options.columns, function(from) {
+              var categories = {};
+              if (options.categories)
+                categories = options.categories[from];
+              else if (options.category)
+                categories[options.category] = from;
 
-      // First, do simple mapping
-      _.each(simple, function(options) {
-        mapped[options.to] = resolve(row, options.from);
-      });
-
-      // Then, do complex mapping
-      if (complex.length) {
-        var results = [mapped];
-
-        _.each(complex, function(options) {
-          var prev_results = results;
-          results = [];
-
-          _.each(prev_results, function(mapped) {
-            _.each(options.columns, function(from) {
-              var value = resolve(row, from);
-
-              if (value != null) {
-                var categories = options.categories && options.categories[from];
-
-                var new_row = _.extend({}, mapped, categories);
-                new_row[options.to] = value;
-
-                if (!options.categories)
-                  new_row[options.category] = from;
-
-                results.push(new_row);
-              }
+              return {
+                mapping: existing.mapping.concat([{from: from, to: options.to}]),
+                categories: _.extend({}, existing.categories, categories)
+              };
             });
-          });
-        });
+          })
+          .flatten(true)
+          .value();
+      }, [{
+        mapping: [],
+        categories: {}
+      }]);
+    }
 
-        _.each(results, function(mapped) {
-          memo.push(mapped);
-        });
-      }
-      else {
-        memo.push(mapped);
-      }
+    // Generate compiled function
+    //
+    // Example:
+    // {x: 'a'}
+    //
+    // function(resolve, clone, out, cursor, row, index) {
+    //   row['x'] = resolve(row, 'a');
+    //   out[cursor] = row;
+    // }
+    //
+    // {x: 'a', y: {columns: ['b', 'c']}, z: {columns: ['d', 'e']}}
+    //
+    // function(...) {
+    //   row['x'] = resolve(row, 'a');
+    //
+    //   out[cursor + 0] = row;
+    //   out[cursor + 1] = clone(row);
+    //   out[cursor + 2] = clone(row);
+    //   out[cursor + 3] = clone(row);
+    //
+    //   out[cursor + 0]['z'] = resolve(out[cursor + 3], 'd');
+    //   out[cursor + 0]['y'] = resolve(out[cursor + 3], 'b');
+    //   // (categories not shown)
+    //
+    //   out[cursor + 1]['z'] = resolve(out[cursor + 3], 'e');
+    //   out[cursor + 1]['y'] = resolve(out[cursor + 3], 'b');
+    //
+    //   ...
+    // }
 
-      return memo;
+    var fn_body = '';
+
+    // Simple mapping
+    if (simple.length) {
+      fn_body += _.map(simple, function(options) {
+        return 'row[\'' + options.to + '\'] = ' + builder.resolve(options.from) + ';';
+      }).join('\n');
+
+      if (complex.length)
+        fn_body += '\n\n';
+      else
+        fn_body += 'out[cursor] = row;';
+    }
+
+    // Complex mapping
+    if (complex.length) {
+      // Add declarations
+      fn_body += _.map(complex, function(options, index, items) {
+        return 'out[cursor + ' + index + '] = ' + (index > 0 ? 'clone(row)' : 'row') + ';';
+      }).join('\n') + '\n\n';
+
+      // Add mapping and categories
+      fn_body += _.map(complex, function(options, index) {
+        var mapping = _.map(options.mapping, function(mapping) {
+          return 'out[cursor + ' + index + '][\'' + mapping.to + '\'] = ' + builder.resolve(mapping.from) + ';';
+        }).join('\n');
+
+        var categories = _.map(options.categories, function(value, key) {
+          return 'out[cursor + ' + index + '][\'' + key + '\'] = ' + builder.value(value) + ';';
+        }).join('\n');
+
+        return mapping + '\n' + categories;
+      }).join('\n\n');
+    }
+
+    var fn = new Function('resolve', 'clone', 'out', 'cursor', 'row', 'index', fn_body);
+
+    mapRow = function mapRow(out, cursor, row, index, details) {
+      if (row)
+        return fn(utils.resolve, utils.cloneObject, out, cursor, row, index);
     };
+    mapRow.count = complex.length || 1;
+    return mapRow;
   };
 
-  Store.generateCast = function generateCast(options) {
+  Store.generateCast = function generateCast(options, types) {
     if (_.isFunction(options)) return options;
 
-    return function castRow(row, index, details, types) {
-      _.each(options, function(type, key) {
-        var cast = _.isFunction(type) ? type : types[type];
-        if (cast)
-          row[key] = cast(row[key]);
-      });
+    // Load type functions for options
+    var cast_options = {};
+    _.each(options, function(type, key) {
+      cast_options[key] = _.isFunction(type) ? type : types[type];
+    });
 
-      return row;
+    // Create cast function that sets properties directly instead of with iterator
+    //
+    // Example:
+    // row['a'] = cast_options['a'](row['a'], index, details);
+    // row['b'] = cast_options['b'](row['b'], index, details);
+    // row['c'] = cast_options['c'](row['c'], index, details);
+
+    var fn_body = _.map(_.keys(cast_options), function(key) {
+      return 'row[\'' + key + '\'] = cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details);';
+    }).join('\n');
+    fn_body += 'return row;';
+    var fn = new Function('cast_options', 'row', 'index', 'details', fn_body);
+
+    return function castRow(row, index, details) {
+      if (row)
+        return fn(cast_options, row, index, details);
     };
   };
 
-  Store.prototype ={
+  _.extend(Store.prototype, {
     /**
       Load values currently in store
 
@@ -184,7 +255,7 @@
       // Generate cast and map for options
       options = options || {};
       if (options.cast)
-        options._cast = Store.generateCast(options.cast);
+        options._cast = Store.generateCast(options.cast, this.types);
       if (options.map)
         options._map = Store.generateMap(options.map);
 
@@ -195,7 +266,6 @@
           // New path
           cache = this.cache[path] = {
             filename: path,
-            raw: [],
             values: []
           };
         }
@@ -222,8 +292,8 @@
         else if (!cache.loading) {
           // Hasn't loaded and isn't currently loading -> load
           cache.loading = Store.load(path)
-            .then(function(raw) {
-              cache.raw = raw;
+            .then(function(values) {
+              cache.values = values;
 
               Store.processRows(cache, this);
 
@@ -250,12 +320,7 @@
       @chainable
     */
     cast: function cast(options) {
-      this._cast = Store.generateCast(options);
-      _.each(this.cache, function(cache) {
-        // Re-process rows as necessary
-        if (!cache.cast)
-          Store.processRows(cache, this);
-      }, this);
+      this._cast = Store.generateCast(options, this.types);
 
       return this;
     },
@@ -286,11 +351,6 @@
     */
     map: function map(options) {
       this._map = Store.generateMap(options);
-      _.each(this.cache, function(cache) {
-        // Re-process rows as necessary
-        if (!cache.map)
-          Store.processRows(cache, this);
-      }, this);
 
       return this;
     },
@@ -304,7 +364,7 @@
     query: function query(options) {
       return new Query(this, options);
     }
-  };
+  });
 
   /**
     Query
@@ -382,7 +442,7 @@
     }
   };
 
-  Query.prototype ={
+  _.extend(Query.prototype, {
     // Proxy promise methods
     then: function() {
       this.promise = this.promise.then.apply(this.promise, arguments);
@@ -430,9 +490,8 @@
           return _.filter(rows, predicate);
         }
         else {
-          return _.filter(rows, function(row) {
-            return matcher(predicate, row);
-          });
+          var matches = matcher(predicate);
+          return _.filter(rows, matches);
         }
       });
     },
@@ -477,7 +536,7 @@
           });
 
           _.each(rows, function(row, index, rows) {
-            var key = quickKey(row, keys, values);
+            var key = utils.quickKey(row, keys, values);
             if (!meta[key]) {
               meta[key] = _.object(keys, _.map(keys, function(key, index) {
                 return values[index](row);
@@ -592,8 +651,9 @@
 
         function createSeries(series) {
           // Find matching result and load values for series
+          var matches = matcher(series.meta);
           var result = _.find(results, function(result) {
-            return matcher(series.meta, result.meta);
+            return matches(result.meta);
           });
 
           series.values = (result && result.values) || [];
@@ -601,7 +661,7 @@
         }
       });
     }
-  };
+  });
 
   /**
     Matching helper for advanced querying
@@ -614,83 +674,94 @@
     var test = {a: 4, b: 3, c: 2, d: 1};
 
     // a = 4 AND b = 2
-    matcher({a: 4, b: 3}, test); // -> true
+    matcher({a: 4, b: 3})(test); // -> true
 
     // z = 0 OR b = 3
-    matcher({$or: {z: 0, b: 3}}, test); // -> true
+    matcher({$or: {z: 0, b: 3}})(test); // -> true
 
     // c < 10 AND d >= 1
-    matcher({c: {$lt: 10}, d: {$gte: 1}}, test); // -> true
+    matcher({c: {$lt: 10}, d: {$gte: 1}})(test); // -> true
 
     // a in [3, 4, 5] and d != 0
-    matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}}, test); // -> true
+    matcher({a: {$in: [3, 4, 5]}, d: {$ne: 0}})(test); // -> true
     ```
 
     @method matcher
     @param {Object} query
-    @param {Object} row
-    @param {String} [lookup] (lookup value for recursion)
-    @returns {Boolean}
+    @returns {Function}
   */
-  var matcher = DataManager.matcher = function matcher(query, row, lookup) {
-    function value(key, item) {
-      var operation = logical[key] || comparison[key];
-      if (operation) return operation(item);
 
-      // If query is given for row key, match recursively with lookup
-      // otherwise compare with equals
-      // TODO Not too slow, but look into non-recursive approach
-      var isQuery = _.isObject(item) && !(item instanceof Date) && !_.isArray(item);
-      if (isQuery) return matcher(item, row, key);
-      else return _.isEqual(resolve(row, key), item);
+  var matcher = DataManager.matcher = function matcher(query) {
+    function result(key, value, lookup) {
+      var operation = logical[key] || comparison[key];
+      if (operation)
+        return operation(value, lookup);
+
+      var is_query = _.isObject(value) && !(value instanceof Date) && !_.isArray(value);
+      if (is_query)
+        return result('$and', value, key);
+      else
+        return builder.equal(key, value);
     }
 
     var logical = {
-      '$and': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result && value(key, item);
-        }, true);
+      '$and': function logical_and(query, lookup) {
+        return '(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && (') + ')';
       },
-      '$or': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result || value(key, item);
-        }, false);
+      '$or': function logical_or(query, lookup) {
+        return '(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') || (') + ')';
       },
-      '$not': function(query) {
-        return !logical['$and'](query);
+      '$not': function logical_not(query, lookup) {
+        return '!((' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && (') + '))';
       },
-      '$nor': function(query) {
-        return _.reduce(query, function(result, item, key) {
-          return result && !value(key, item);
-        }, true);
-      }
-    };
-    var comparison = {
-      '$gt': function(value) {
-        return resolve(row, lookup) > value;
-      },
-      '$gte': function(value) {
-        return resolve(row, lookup) >= value;
-      },
-      '$lt': function(value) {
-        return resolve(row, lookup) < value;
-      },
-      '$lte': function(value) {
-        return resolve(row, lookup) <= value;
-      },
-      '$in': function(value) {
-        return _.indexOf(value, resolve(row, lookup)) >= 0;
-      },
-      '$ne': function(value) {
-        return resolve(row, lookup) !== value;
-      },
-      '$nin': function(value) {
-        return _.indexOf(value, resolve(row, lookup)) === -1;
+      '$nor': function logical_nor(query, lookup) {
+        return '!(' + _.map(query, function(value, key) {
+          return result(key, value, lookup);
+        }).join(') && !(') + ')';
       }
     };
 
-    return logical['$and'](query);
+    var comparison = {
+      '$gt': function comparison_gt(value, lookup) {
+        return builder.resolve(lookup) + ' > ' + builder.value(value);
+      },
+      '$gte': function comparison_gte(value, lookup) {
+        return builder.resolve(lookup) + ' >= ' + builder.value(value);
+      },
+      '$lt': function comparison_lt(value, lookup) {
+        return builder.resolve(lookup) + ' < ' + builder.value(value);
+      },
+      '$lte': function comparison_lte(value, lookup) {
+        return builder.resolve(lookup) + ' <= ' + builder.value(value);
+      },
+      '$in': function comparison_in(value, lookup) {
+        return builder.indexOf(lookup, value) + ' >= 0';
+      },
+      '$ne': function comparison_ne(value, lookup) {
+        return '!' + builder.equal(lookup, value);
+      },
+      '$nin': function comparison_nin(value, lookup) {
+        return builder.indexOf(lookup, value) + ' === -1';
+      }
+    };
+
+    var fn = new Function('row', 'resolve', 'equal', 'indexOf', 'return ' + result('$and', query) + ';');
+    return function(row) {
+      if (row)
+        return fn(row, utils.resolve, utils.equal, utils.indexOf);
+      else
+        return false;
+    };
   };
+
+  // Utils
+  var utils = DataManager.utils = {};
 
   /**
     Resolve value from object by nested key
@@ -709,7 +780,7 @@
     @param {String} key
     @return {Any}
   */
-  var resolve = DataManager.resolve = function resolve(obj, key) {
+  utils.resolve = function resolve(obj, key) {
     if (!obj) return;
     if (obj[key]) return obj[key];
 
@@ -720,12 +791,60 @@
   };
 
   // Create a key for groupBy using key:value format
-  function quickKey(row, keys, values) {
+  utils.quickKey = function quickKey(row, keys, values) {
     var key = [];
     for (var i = 0, l = keys.length; i < l; i++) {
       key.push(keys[i] + ':' + values[i](row));
     }
     return key.join('&');
-  }
+  };
+
+  // Quickly clone an object
+  utils.cloneObject = function cloneObject(obj) {
+    var cloned = {};
+    for (var key in obj) {
+      cloned[key] = obj[key];
+    }
+    return cloned;
+  };
+
+  // Check if two values are equal
+  utils.equal = _.isEqual;
+
+  // Check if item is in array
+  utils.indexOf = _.indexOf;
+
+  // Utils related to building compiled functions
+  var builder = DataManager.builder = {};
+
+  // Convert raw value to compilable value
+  builder.value = function value(raw_value) {
+    if (_.isString(raw_value))
+      return '\'' + raw_value + '\'';
+    else if (raw_value instanceof Date)
+      return 'new Date(\'' + raw_value.toJSON() + '\')';
+    else if (_.isObject(raw_value))
+      return JSON.stringify(raw_value);
+    else
+      return raw_value;
+  };
+
+  // Use utils.resolve if '.' in key, otherwise use direct method
+  builder.resolve = function resolve(key) {
+    if (key.indexOf('.') >= 0)
+      return 'resolve(row, \'' + key + '\')';
+    else
+      return 'row[\'' + key + '\']';
+  };
+
+  // Use _.isEqual ("equal" in fn scope) to compare row value to value
+  builder.equal = function equal(key, value) {
+    return 'equal(' + builder.resolve(key) + ', ' + builder.value(value) + ')';
+  };
+
+  // Use _.indexOf ("indexOf" in fn scope) to check if value is in array
+  builder.indexOf = function(key, value) {
+    return 'indexOf(' + builder.value(value) + ', ' + builder.resolve(key) + ')';
+  };
 
 })(_, RSVP, d3, this);
