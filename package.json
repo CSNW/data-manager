@@ -1,6 +1,6 @@
 {
   "name": "DataManager",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Advanced querying and processing for csv data",
   "main": "DataManager.js",
   "scripts": {
