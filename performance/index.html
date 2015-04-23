@@ -42,6 +42,7 @@
 
     function run() {
       var store = window.store = new DataManager.Store();
+      var raw;
 
       var steps = new RSVP.Promise(function(resolve) { resolve(); });
       var count = 1;
@@ -63,9 +64,18 @@
         });
       }
 
+      function processRows() {
+        var cache = store.cache['data/massive.csv'];
+        cache.values = raw;
+        DataManager.Store.processRows(cache, store);
+      }
+
       // Load
       step('load', function(done) {
-        return store.load('data/massive.csv').then(done);
+        return store.load('data/massive.csv').then(function(details) {
+          raw = details['data/massive.csv'].values;
+          done();
+        });
       });
 
       // Cast
@@ -78,35 +88,59 @@
           d: 'Number',
           e: 'String'
         });
+        processRows();
       });
 
       // Map (simple)
       step('map (simple)', function() {
+        delete store._cast;
         store.map({
-          y: 'a',
-          y2: 'd'
+          x: 'line',
+          y: 'b'
         });
+        processRows();
       });
 
       // Map (complex)
       step('map (complex)', function() {
         store.map({
+          x: 'line',
           y: {
             columns: ['a', 'd'],
-            category: 'type'
+            category: 'y_type'
           }
         });
+        processRows();
       });
-  
+
+      // Map (more complex)
+      step('map (more complex)', function() {
+        store.map({
+          x: 'line',
+          y: {
+            columns: ['a', 'd'],
+            category: 'y_type'
+          },
+          z: {
+            columns: ['c', 'd'],
+            categories: {
+              c: {isC: true, isD: false},
+              d: {isC: false, idD: true}
+            }
+          }
+        });
+        processRows();
+      });
+
       step('filter (function)', function(done) {
         return store.query({
           filter: function(row) {
-            return row.y > 50 && row.c === true;
+            return row.y > 50 && row.z === true && row.isC === true;
           }
         }).then(function(results) {
           var num_results = results[0].values.length;
           if (num_results != 37181)
-            console.log('filter != 37181:', num_results);
+            console.error('filter != 37181:', num_results);
 
           done();
         });
@@ -116,18 +150,19 @@
         return store.query({
           filter: {
             y: {$gt: 50},
-            c: true
+            z: true,
+            isC: true
           }
         }).then(function(results) {
           var num_results = results[0].values.length;
           if (num_results != 37181)
-            console.log('filter != 37181:', num_results);
+            console.error('filter != 37181:', num_results);
 
           done();
         });
       });
 
-      steps = steps.then(function() { 
+      steps = steps.then(function() {
         console.log('\nDONE!');
       });
 

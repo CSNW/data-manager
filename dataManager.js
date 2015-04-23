@@ -1,24 +1,6 @@
 (function(_, RSVP, d3, global) {
   'use strict';
 
-  var utils = {
-    cloneObject: function cloneObject(obj) {
-      var cloned = {};
-      for (var key in obj) {
-        cloned[key] = obj[key];
-      }
-      return cloned;
-    },
-    omit: function omit(obj, keys) {
-      var copy = {};
-      for (var key in obj) {
-        if (!_.contains(keys, key))
-          copy[key] = obj[key];
-      }
-      return copy;
-    }
-  };
-
   /**
     Generic data store with async load, cast, map, and query
 
@@ -30,10 +12,6 @@
 
     // Load types from static
     this.types = _.clone(Store.types);
-
-    // Set default cast and map functions
-    this._cast = Store.generateCast(utils.cloneObject);
-    this._map = Store.generateMap(function(row) { return row; });
   };
 
   // Expose Store as DataManager globally and attach static
@@ -47,10 +25,10 @@
       return +value;
     },
     'Boolean': function(value) {
-      return _.isString(value) ? value.toUpperCase() === 'TRUE' : (value === 1 || value === true);
+      return value.toUpperCase ? value.toUpperCase() === 'TRUE' : (value === 1 || value === true);
     },
     'String': function(value) {
-      return _.isUndefined(value) ? '' : '' + value;
+      return value == null ? '' : '' + value;
     },
     'Date': function(value) {
       return new Date(value);
@@ -70,116 +48,157 @@
 
   // Process given rows
   Store.processRows = function processRows(cache, store) {
-    var castFn = (cache._cast) || store._cast;
-    var mapFn = (cache._map) || store._map;
+    var castFn = cache._cast || store._cast;
+    var mapFn = cache._map || store._map;
 
-    // Cast and map rows
-    cache.values = cache.raw;
-    cache.values = _.compact(_.map(cache.values, function(row, index) {
-      return castFn.call(store, row, index, cache);
-    }));
-    cache.values = _.reduce(cache.values, function(memo, row, index) {
-      return mapFn.call(store, memo, row, index, cache);
-    }, []);
+    if (castFn || mapFn) {
+      var values = cache.values;
+      var index = -1;
+      var length = values.length;
+      var count = mapFn ? mapFn.count : 1;
+      var results = Array(length * count);
+
+      while (++index < length) {
+        if (castFn)
+          results[index * count] = castFn.call(store, values[index], index, cache);
+        else
+          results[index * count] = values[index];
+
+        if (mapFn)
+          mapFn.call(store, results, index * count, results[index * count], index, cache);
+      }
+
+      cache.values = results;
+    }
 
     return cache.values;
   };
 
   // Generate map function for options
-  
   Store.generateMap = function generateMap(options) {
     options = options || {};
+    var mapRow;
+
     if (_.isFunction(options)) {
-      return function(memo, row, index, details) {
-        memo.push(options.call(this, row, index, details));
-        return memo;
+      mapRow = function mapRow(out, cursor, row, index, details) {
+        out[cursor] = options(row, index, details);
       };
+      mapRow.count = 1;
+      return mapRow;
     }
 
     // Categorize mapping
     var simple = [];
     var complex = [];
-    var keys = [];
     _.each(options, function(option, to) {
-      if (_.isObject(option)) {
-        complex.push(_.defaults({to: to}, option, {
-          category: '__yColumn'
-        }));
-        keys = keys.concat(option.columns);
-      }
-      else {
+      if (_.isObject(option))
+        complex.push(_.extend({to: to}, option));
+      else
         simple.push({to: to, from: option});
-        keys.push(option);
-      }
     });
 
-    function compile(row) {
-      var fn_body = '';
-      _.each(simple, function(options) {
-        fn_body += 'row[\'' + options.to + '\'] = resolve(row, \'' + options.from + '\');\n';
-      });
+    // Flatten complex mapping
+    if (complex.length) {
+      complex = _.reduce(complex, function(memo, options) {
+        return _.chain(memo)
+          .map(function(existing) {
+            return _.map(options.columns, function(from) {
+              var categories = {};
+              if (options.categories)
+                categories = options.categories[from];
+              else if (options.category)
+                categories[options.category] = from;
 
-      var fn = new Function('row', 'resolve', fn_body);
-
-      return function(row) {
-        return fn(row, resolve);
-      }
-    }
-
-    var compiled;
-    if (simple.length) {
-      compiled = function(row) {
-        var fn = compile(row);
-
-        compiled = fn;
-        return fn(row);
-      };
-    }
-
-    return function mapRow(memo, row, index, details) {
-      var mapped = row;
-
-      // First, do simple mapping
-      if (compiled)
-        compiled(mapped);
-
-      // Then, do complex mapping
-      if (complex.length) {
-        var results = [mapped];
-
-        _.each(complex, function(options) {
-          var prev_results = results;
-          results = [];
-
-          _.each(prev_results, function(mapped) {
-            _.each(options.columns, function(from) {
-              var value = resolve(row, from);
-
-              if (value != null) {
-                var categories = options.categories && options.categories[from];
-
-                var new_row = _.extend({}, mapped, categories);
-                new_row[options.to] = value;
-
-                if (!options.categories)
-                  new_row[options.category] = from;
-
-                results.push(new_row);
-              }
+              return {
+                mapping: existing.mapping.concat([{from: from, to: options.to}]),
+                categories: _.extend({}, existing.categories, categories)
+              };
             });
-          });
-        });
+          })
+          .flatten(true)
+          .value();
+      }, [{
+        mapping: [],
+        categories: {}
+      }]);
+    }
 
-        _.each(results, function(mapped) {
-          memo.push(mapped);
-        });
-      }
-      else {
-        memo.push(mapped);
-      }
+    // Generate compiled function
+    //
+    // Example:
+    // {x: 'a'}
+    //
+    // function(resolve, clone, out, cursor, row, index) {
+    //   row['x'] = resolve(row, 'a');
+    //   out[cursor] = row;
+    // }
+    //
+    // {x: 'a', y: {columns: ['b', 'c']}, z: {columns: ['d', 'e']}}
+    //
+    // function(...) {
+    //   row['x'] = resolve(row, 'a');
+    //
+    //   out[cursor + 0] = row;
+    //   out[cursor + 1] = clone(row);
+    //   out[cursor + 2] = clone(row);
+    //   out[cursor + 3] = clone(row);
+    //
+    //   out[cursor + 0]['z'] = resolve(out[cursor + 3], 'd');
+    //   out[cursor + 0]['y'] = resolve(out[cursor + 3], 'b');
+    //   // (categories not shown)
+    //
+    //   out[cursor + 1]['z'] = resolve(out[cursor + 3], 'e');
+    //   out[cursor + 1]['y'] = resolve(out[cursor + 3], 'b');
+    //
+    //   out[cursor + 2]['z'] = resolve(out[cursor + 3], 'd');
+    //   out[cursor + 2]['y'] = resolve(out[cursor + 3], 'c');
+    //
+    //   out[cursor + 3]['z'] = resolve(out[cursor + 3], 'e');
+    //   out[cursor + 3]['y'] = resolve(out[cursor + 3], 'c');
+    // }
 
-      return memo;
+    var fn_body = '';
+
+    // Simple mapping
+    if (simple.length) {
+      fn_body += _.map(simple, function(options) {
+        return 'row[\'' + options.to + '\'] = resolve(row, \'' + options.from + '\');';
+      }).join('\n');
+
+      if (complex.length)
+        fn_body += '\n\n';
+      else
+        fn_body += 'out[cursor] = row;';
+    }
+
+    // Complex mapping
+    if (complex.length) {
+      // Add declarations
+      fn_body += _.map(complex, function(options, index, items) {
+        return 'out[cursor + ' + index + '] = ' + (index > 0 ? 'clone(row)' : 'row') + ';'
+      }).join('\n') + '\n\n';
+
+      // Add mapping and categories
+      fn_body += _.map(complex, function(options, index) {
+        var mapping = _.map(options.mapping, function(mapping) {
+          return 'out[cursor + ' + index + '][\'' + mapping.to + '\'] = resolve(row, \'' + mapping.from + '\');';
+        }).join('\n');
+
+        var categories = _.map(options.categories, function(value, key) {
+          return 'out[cursor + ' + index + '][\'' + key + '\'] = ' + getValue(value) + ';';
+        }).join('\n');
+
+        return mapping + '\n' + categories;
+      }).join('\n\n');
+    }
+
+    var fn = new Function('resolve', 'clone', 'out', 'cursor', 'row', 'index', fn_body);
+
+    mapRow = function mapRow(out, cursor, row, index, details) {
+      return fn(DataManager.resolve, _.clone, out, cursor, row, index);
     };
+    mapRow.count = complex.length || 1;
+    return mapRow;
   };
 
   Store.generateCast = function generateCast(options, types) {
@@ -194,21 +213,18 @@
     // Create cast function that sets properties directly instead of with iterator
     //
     // Example:
-    // return {
-    //   'a': cast_options['a'](row['a'], index, details),
-    //   'b': cast_options['b'](row['b'], index, details),
-    //   'c': cast_options['c'](row['c'], index, details)
-    // };
-    var fn_body = 'return {\n';
-    _.each(_.keys(cast_options), function(key, index) {
-      fn_body += '  \'' + key + '\': cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details),\n';
-    });
-    fn_body += '\n};';
+    // row['a'] = cast_options['a'](row['a'], index, details);
+    // row['b'] = cast_options['b'](row['b'], index, details);
+    // row['c'] = cast_options['c'](row['c'], index, details);
 
+    var fn_body = _.map(_.keys(cast_options), function(key) {
+      return 'row[\'' + key + '\'] = cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details);';
+    }).join('\n');
     var fn = new Function('cast_options', 'row', 'index', 'details', fn_body);
 
     return function castRow(row, index, details) {
-      return fn(cast_options, row, index, details);
+      fn(cast_options, row, index, details);
+      return row;
     };
   };
 
@@ -250,7 +266,6 @@
           // New path
           cache = this.cache[path] = {
             filename: path,
-            raw: [],
             values: []
           };
         }
@@ -276,9 +291,11 @@
         }
         else if (!cache.loading) {
           // Hasn't loaded and isn't currently loading -> load
+          console.time('load');
           cache.loading = Store.load(path)
-            .then(function(raw) {
-              cache.raw = raw;
+            .then(function(values) {
+              console.timeEnd('load');
+              cache.values = values;
 
               Store.processRows(cache, this);
 
@@ -306,11 +323,6 @@
     */
     cast: function cast(options) {
       this._cast = Store.generateCast(options, this.types);
-      _.each(this.cache, function(cache) {
-        // Re-process rows as necessary
-        if (!cache.cast)
-          Store.processRows(cache, this);
-      }, this);
 
       return this;
     },
@@ -341,11 +353,6 @@
     */
     map: function map(options) {
       this._map = Store.generateMap(options);
-      _.each(this.cache, function(cache) {
-        // Re-process rows as necessary
-        if (!cache.map)
-          Store.processRows(cache, this);
-      }, this);
 
       return this;
     },
@@ -690,16 +697,6 @@
     function resolve(key) {
       return 'resolve(row, \'' + key + '\')';
     }
-    function getValue(value) {
-      if (_.isString(value))
-        return '\'' + value + '\'';
-      else if (value instanceof Date)
-        return 'new Date(\'' + value.toJSON() + '\')';
-      else if (_.isObject(value))
-        return JSON.stringify(value);
-      else
-        return value;
-    }
     function equal(key, value) {
       return 'equal(' + resolve(key) + ', ' + getValue(value) + ')';
     }
@@ -808,7 +805,15 @@
     return key.join('&');
   }
 
-  // Expose utils
-  DataManager.utils = utils;
+  var getValue = function getValue(value) {
+    if (_.isString(value))
+      return '\'' + value + '\'';
+    else if (value instanceof Date)
+      return 'new Date(\'' + value.toJSON() + '\')';
+    else if (_.isObject(value))
+      return JSON.stringify(value);
+    else
+      return value;
+  };
 
 })(_, RSVP, d3, this);
