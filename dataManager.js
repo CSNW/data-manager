@@ -1,6 +1,16 @@
 (function(_, RSVP, d3, global) {
   'use strict';
 
+  var utils = {
+    cloneObject: function cloneObject(obj) {
+      var cloned = {};
+      for (var key in obj) {
+        cloned[key] = obj[key];
+      }
+      return cloned;
+    }
+  }
+
   /**
     Generic data store with async load, cast, map, and query
 
@@ -195,7 +205,7 @@
     var fn = new Function('resolve', 'clone', 'out', 'cursor', 'row', 'index', fn_body);
 
     mapRow = function mapRow(out, cursor, row, index, details) {
-      return fn(DataManager.resolve, _.clone, out, cursor, row, index);
+      return fn(DataManager.resolve, utils.cloneObject, out, cursor, row, index);
     };
     mapRow.count = complex.length || 1;
     return mapRow;
