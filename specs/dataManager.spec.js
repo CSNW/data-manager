@@ -3,6 +3,8 @@
   describe('DataManager', function() {
     var Store = DataManager.Store;
     var Query = DataManager.Query;
+    var matcher = DataManager.matcher;
+    var resolve = DataManager.utils.resolve;
     var store, _load;
 
     beforeEach(function() {
@@ -18,16 +20,19 @@
     function addRows(filename, rows) {
       store.cache[filename] = {
         loaded: true,
-        raw: rows,
         values: rows
       };
+    }
+
+    function processRows(filename) {
+      Store.processRows(store.cache[filename], store);
     }
 
     describe('Store', function() {
       describe('cast', function() {
         beforeEach(function() {
           store.cache['a.csv'] = {
-            raw: [
+            values: [
               {a: '10', b: '1.23', c: 'false', d: 'Hello', e: 'Jan. 1, 2014', f: '2014'},
               {a: '10', b: '1.23', c: 'false', d: 'Hello', e: 'Jan. 1, 2014', f: '2014'}
             ]
@@ -45,6 +50,7 @@
               f: new Date(+row.f, 0, 1)
             };
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(2);
@@ -67,6 +73,7 @@
               return new Date(+value, 0, 1);
             }
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(2);
@@ -85,6 +92,7 @@
           store.cast({
             f: 'Date.year'
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows[1].f.getFullYear()).toEqual(2014);
@@ -94,7 +102,7 @@
       describe('map', function() {
         beforeEach(function() {
           store.cache['a.csv'] = {
-            raw: [
+            values: [
               {a: 1, b: 2, c: 3, d: 4, e: 5},
               {a: 6, b: 7, c: 8, d: 9, e: 10},
               {a: 11, b: 12, c: 13, d: 14, e: 15},
@@ -105,31 +113,30 @@
 
         it('should map single x', function() {
           store.map({x: 'a'});
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(4);
           expect(rows[0].x).toEqual(1);
-          expect(rows[0].a).toBeUndefined();
         });
 
         it('should map single y', function() {
           store.map({y: 'b'});
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(4);
           expect(rows[0].y).toEqual(2);
-          expect(rows[0].b).toBeUndefined();
         });
 
         it('should map single x and y', function() {
           store.map({x: 'a', y: 'b'});
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(4);
           expect(rows[0].x).toEqual(1);
           expect(rows[0].y).toEqual(2);
-          expect(rows[0].a).toBeUndefined();
-          expect(rows[0].b).toBeUndefined();
         });
 
         it('should map multiple y to single category', function() {
@@ -139,6 +146,7 @@
               category: 'type'
             }
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(8);
@@ -146,8 +154,6 @@
           expect(rows[0].type).toEqual('b');
           expect(rows[1].y).toEqual(3);
           expect(rows[1].type).toEqual('c');
-          expect(rows[0].b).toBeUndefined();
-          expect(rows[0].c).toBeUndefined();
         });
 
         it('should map values to categories', function() {
@@ -160,6 +166,7 @@
               }
             }
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(8);
@@ -167,8 +174,6 @@
           expect(rows[1].y).toEqual(3);
           expect(rows[0].isB).toEqual(true);
           expect(rows[1].isB).toEqual(false);
-          expect(rows[0].b).toBeUndefined();
-          expect(rows[0].c).toBeUndefined();
         });
 
         it('should map multiple y to multiple categories', function() {
@@ -182,6 +187,7 @@
               }
             }
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(12);
@@ -194,9 +200,6 @@
           expect(rows[0].categoryId).toEqual(1);
           expect(rows[1].categoryId).toEqual(2);
           expect(rows[2].categoryId).toEqual(3);
-          expect(rows[0].b).toBeUndefined();
-          expect(rows[0].c).toBeUndefined();
-          expect(rows[0].d).toBeUndefined();
         });
 
         it('should pass through any columns not listed in map', function() {
@@ -204,11 +207,10 @@
             x: 'a',
             y: 'b'
           });
+          processRows('a.csv');
 
           var rows = store.cache['a.csv'].values;
           expect(rows.length).toEqual(4);
-          expect(rows[0].a).toBeUndefined();
-          expect(rows[0].b).toBeUndefined();
           expect(rows[0].c).toEqual(3);
           expect(rows[1].d).toEqual(9);
           expect(rows[2].e).toEqual(15);
@@ -261,7 +263,7 @@
             expect(_load.calls.count()).toEqual(1);
 
             expect(store.cache['b.csv']).not.toBeUndefined();
-            expect(store.cache['b.csv'].raw.length).toEqual(1);
+            expect(store.cache['b.csv'].values.length).toEqual(1);
           }).then(done, done.fail);
         });
 
@@ -590,7 +592,7 @@
           matches: function(util) {
             return {
               compare: function(actual, expected) {
-                var matches = DataManager.matcher(actual);
+                var matches = matcher(actual);
                 return {
                   pass: matches(expected || row),
                   message: 'Expected ' + JSON.stringify(actual) + ' to match ' + JSON.stringify(expected || row)
@@ -679,7 +681,7 @@
     });
 
     describe('resolve', function() {
-      var fixture, resolve;
+      var fixture, _resolve;
       beforeEach(function() {
         fixture = {
           a: 1,
@@ -694,24 +696,24 @@
             }
           }
         };
-        resolve = function(key) {
-          return DataManager.resolve(fixture, key);
+        _resolve = function(key) {
+          return resolve(fixture, key);
         };
       });
 
       it('should resolve simple key', function() {
-        expect(resolve('a')).toEqual(1);
-        expect(resolve('key.with.periods')).toEqual(2);
-        expect(resolve('unknown')).toBeUndefined();
+        expect(_resolve('a')).toEqual(1);
+        expect(_resolve('key.with.periods')).toEqual(2);
+        expect(_resolve('unknown')).toBeUndefined();
       });
 
       it('should resolve nested key', function() {
-        expect(resolve('b.c')).toEqual(3);
-        expect(resolve('b.d.e')).toEqual(4);
-        expect(resolve('b.d.f.g')).toEqual(5);
-        expect(resolve('b.unknown')).toBeUndefined();
-        expect(resolve('b.d.unknown')).toBeUndefined();
-        expect(resolve('b.d.f.unknown')).toBeUndefined();
+        expect(_resolve('b.c')).toEqual(3);
+        expect(_resolve('b.d.e')).toEqual(4);
+        expect(_resolve('b.d.f.g')).toEqual(5);
+        expect(_resolve('b.unknown')).toBeUndefined();
+        expect(_resolve('b.d.unknown')).toBeUndefined();
+        expect(_resolve('b.d.f.unknown')).toBeUndefined();
       });
     });
   });

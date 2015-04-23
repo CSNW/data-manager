@@ -1,16 +1,6 @@
 (function(_, RSVP, d3, global) {
   'use strict';
 
-  var utils = {
-    cloneObject: function cloneObject(obj) {
-      var cloned = {};
-      for (var key in obj) {
-        cloned[key] = obj[key];
-      }
-      return cloned;
-    }
-  }
-
   /**
     Generic data store with async load, cast, map, and query
 
@@ -57,6 +47,7 @@
   };
 
   // Process given rows
+  // @static
   Store.processRows = function processRows(cache, store) {
     var castFn = cache._cast || store._cast;
     var mapFn = cache._map || store._map;
@@ -66,16 +57,16 @@
       var index = -1;
       var length = values.length;
       var count = mapFn ? mapFn.count : 1;
-      var results = Array(length * count);
+      var results = new Array(length * count);
 
       while (++index < length) {
         if (castFn)
-          results[index * count] = castFn.call(store, values[index], index, cache);
+          results[index * count] = castFn(values[index], index, cache);
         else
           results[index * count] = values[index];
 
         if (mapFn)
-          mapFn.call(store, results, index * count, results[index * count], index, cache);
+          mapFn(results, index * count, results[index * count], index, cache);
       }
 
       cache.values = results;
@@ -84,7 +75,8 @@
     return cache.values;
   };
 
-  // Generate map function for options
+  // Generate map function for given options
+  // @static
   Store.generateMap = function generateMap(options) {
     options = options || {};
     var mapRow;
@@ -160,11 +152,7 @@
     //   out[cursor + 1]['z'] = resolve(out[cursor + 3], 'e');
     //   out[cursor + 1]['y'] = resolve(out[cursor + 3], 'b');
     //
-    //   out[cursor + 2]['z'] = resolve(out[cursor + 3], 'd');
-    //   out[cursor + 2]['y'] = resolve(out[cursor + 3], 'c');
-    //
-    //   out[cursor + 3]['z'] = resolve(out[cursor + 3], 'e');
-    //   out[cursor + 3]['y'] = resolve(out[cursor + 3], 'c');
+    //   ...
     // }
 
     var fn_body = '';
@@ -172,7 +160,7 @@
     // Simple mapping
     if (simple.length) {
       fn_body += _.map(simple, function(options) {
-        return 'row[\'' + options.to + '\'] = resolve(row, \'' + options.from + '\');';
+        return 'row[\'' + options.to + '\'] = ' + builder.resolve(options.from) + ';';
       }).join('\n');
 
       if (complex.length)
@@ -185,17 +173,17 @@
     if (complex.length) {
       // Add declarations
       fn_body += _.map(complex, function(options, index, items) {
-        return 'out[cursor + ' + index + '] = ' + (index > 0 ? 'clone(row)' : 'row') + ';'
+        return 'out[cursor + ' + index + '] = ' + (index > 0 ? 'clone(row)' : 'row') + ';';
       }).join('\n') + '\n\n';
 
       // Add mapping and categories
       fn_body += _.map(complex, function(options, index) {
         var mapping = _.map(options.mapping, function(mapping) {
-          return 'out[cursor + ' + index + '][\'' + mapping.to + '\'] = resolve(row, \'' + mapping.from + '\');';
+          return 'out[cursor + ' + index + '][\'' + mapping.to + '\'] = ' + builder.resolve(mapping.from) + ';';
         }).join('\n');
 
         var categories = _.map(options.categories, function(value, key) {
-          return 'out[cursor + ' + index + '][\'' + key + '\'] = ' + getValue(value) + ';';
+          return 'out[cursor + ' + index + '][\'' + key + '\'] = ' + builder.value(value) + ';';
         }).join('\n');
 
         return mapping + '\n' + categories;
@@ -205,7 +193,8 @@
     var fn = new Function('resolve', 'clone', 'out', 'cursor', 'row', 'index', fn_body);
 
     mapRow = function mapRow(out, cursor, row, index, details) {
-      return fn(DataManager.resolve, utils.cloneObject, out, cursor, row, index);
+      if (row)
+        return fn(utils.resolve, utils.cloneObject, out, cursor, row, index);
     };
     mapRow.count = complex.length || 1;
     return mapRow;
@@ -230,11 +219,12 @@
     var fn_body = _.map(_.keys(cast_options), function(key) {
       return 'row[\'' + key + '\'] = cast_options[\'' + key + '\'](row[\'' + key + '\'], index, details);';
     }).join('\n');
+    fn_body += 'return row;';
     var fn = new Function('cast_options', 'row', 'index', 'details', fn_body);
 
     return function castRow(row, index, details) {
-      fn(cast_options, row, index, details);
-      return row;
+      if (row)
+        return fn(cast_options, row, index, details);
     };
   };
 
@@ -301,10 +291,8 @@
         }
         else if (!cache.loading) {
           // Hasn't loaded and isn't currently loading -> load
-          console.time('load');
           cache.loading = Store.load(path)
             .then(function(values) {
-              console.timeEnd('load');
               cache.values = values;
 
               Store.processRows(cache, this);
@@ -548,7 +536,7 @@
           });
 
           _.each(rows, function(row, index, rows) {
-            var key = quickKey(row, keys, values);
+            var key = utils.quickKey(row, keys, values);
             if (!meta[key]) {
               meta[key] = _.object(keys, _.map(keys, function(key, index) {
                 return values[index](row);
@@ -704,16 +692,6 @@
   */
 
   var matcher = DataManager.matcher = function matcher(query) {
-    function resolve(key) {
-      return 'resolve(row, \'' + key + '\')';
-    }
-    function equal(key, value) {
-      return 'equal(' + resolve(key) + ', ' + getValue(value) + ')';
-    }
-    function indexOf(key, value) {
-      return 'indexOf(' + getValue(value) + ', ' + resolve(key) + ')';
-    }
-
     function result(key, value, lookup) {
       var operation = logical[key] || comparison[key];
       if (operation)
@@ -723,7 +701,7 @@
       if (is_query)
         return result('$and', value, key);
       else
-        return equal(key, value);
+        return builder.equal(key, value);
     }
 
     var logical = {
@@ -751,33 +729,39 @@
 
     var comparison = {
       '$gt': function comparison_gt(value, lookup) {
-        return resolve(lookup) + ' > ' + getValue(value);
+        return builder.resolve(lookup) + ' > ' + builder.value(value);
       },
       '$gte': function comparison_gte(value, lookup) {
-        return resolve(lookup) + ' >= ' + getValue(value);
+        return builder.resolve(lookup) + ' >= ' + builder.value(value);
       },
       '$lt': function comparison_lt(value, lookup) {
-        return resolve(lookup) + ' < ' + getValue(value);
+        return builder.resolve(lookup) + ' < ' + builder.value(value);
       },
       '$lte': function comparison_lte(value, lookup) {
-        return resolve(lookup) + ' <= ' + getValue(value);
+        return builder.resolve(lookup) + ' <= ' + builder.value(value);
       },
       '$in': function comparison_in(value, lookup) {
-        return indexOf(lookup, value) + ' >= 0';
+        return builder.indexOf(lookup, value) + ' >= 0';
       },
       '$ne': function comparison_ne(value, lookup) {
-        return '!' + equal(lookup, value);
+        return '!' + builder.equal(lookup, value);
       },
       '$nin': function comparison_nin(value, lookup) {
-        return indexOf(lookup, value) + ' === -1';
+        return builder.indexOf(lookup, value) + ' === -1';
       }
     };
 
     var fn = new Function('row', 'resolve', 'equal', 'indexOf', 'return ' + result('$and', query) + ';');
     return function(row) {
-      return fn(row, DataManager.resolve, _.isEqual, _.indexOf);
+      if (row)
+        return fn(row, utils.resolve, utils.equal, utils.indexOf);
+      else
+        return false;
     };
   };
+
+  // Utils
+  var utils = DataManager.utils = {};
 
   /**
     Resolve value from object by nested key
@@ -796,7 +780,7 @@
     @param {String} key
     @return {Any}
   */
-  var resolve = DataManager.resolve = function resolve(obj, key) {
+  utils.resolve = function resolve(obj, key) {
     if (!obj) return;
     if (obj[key]) return obj[key];
 
@@ -807,23 +791,60 @@
   };
 
   // Create a key for groupBy using key:value format
-  function quickKey(row, keys, values) {
+  utils.quickKey = function quickKey(row, keys, values) {
     var key = [];
     for (var i = 0, l = keys.length; i < l; i++) {
       key.push(keys[i] + ':' + values[i](row));
     }
     return key.join('&');
-  }
+  };
 
-  var getValue = function getValue(value) {
-    if (_.isString(value))
-      return '\'' + value + '\'';
-    else if (value instanceof Date)
-      return 'new Date(\'' + value.toJSON() + '\')';
-    else if (_.isObject(value))
-      return JSON.stringify(value);
+  // Quickly clone an object
+  utils.cloneObject = function cloneObject(obj) {
+    var cloned = {};
+    for (var key in obj) {
+      cloned[key] = obj[key];
+    }
+    return cloned;
+  };
+
+  // Check if two values are equal
+  utils.equal = _.isEqual;
+
+  // Check if item is in array
+  utils.indexOf = _.indexOf;
+
+  // Utils related to building compiled functions
+  var builder = DataManager.builder = {};
+
+  // Convert raw value to compilable value
+  builder.value = function value(raw_value) {
+    if (_.isString(raw_value))
+      return '\'' + raw_value + '\'';
+    else if (raw_value instanceof Date)
+      return 'new Date(\'' + raw_value.toJSON() + '\')';
+    else if (_.isObject(raw_value))
+      return JSON.stringify(raw_value);
     else
-      return value;
+      return raw_value;
+  };
+
+  // Use utils.resolve if '.' in key, otherwise use direct method
+  builder.resolve = function resolve(key) {
+    if (key.indexOf('.') >= 0)
+      return 'resolve(row, \'' + key + '\')';
+    else
+      return 'row[\'' + key + '\']';
+  };
+
+  // Use _.isEqual ("equal" in fn scope) to compare row value to value
+  builder.equal = function equal(key, value) {
+    return 'equal(' + builder.resolve(key) + ', ' + builder.value(value) + ')';
+  };
+
+  // Use _.indexOf ("indexOf" in fn scope) to check if value is in array
+  builder.indexOf = function(key, value) {
+    return 'indexOf(' + builder.value(value) + ', ' + builder.resolve(key) + ')';
   };
 
 })(_, RSVP, d3, this);
