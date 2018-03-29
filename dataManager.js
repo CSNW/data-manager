@@ -429,7 +429,7 @@
       // 7. series
       this
         .from(query.from)
-        .then(function(data) {
+        ._then(function(data) {
           // Return merged rows
           return _.flatten(_.pluck(_.values(data), 'values'));
         })
@@ -445,16 +445,14 @@
   _.extend(Query.prototype, {
     // Proxy promise methods
     then: function() {
+      return this.promise.then.apply(this.promise, arguments);
+    },
+    _then: function() {
       this.promise = this.promise.then.apply(this.promise, arguments);
       return this;
     },
     'catch': function() {
-      this.promise = this.promise['catch'].apply(this.promise, arguments);
-      return this;
-    },
-    'finally': function() {
-      this.promise = this.promise['finally'].apply(this.promise, arguments);
-      return this;
+      return this.promise['catch'].apply(this.promise, arguments);
     },
 
     /**
@@ -467,7 +465,7 @@
       if (!paths)
         return this;
 
-      return this.then(function _from() {
+      return this._then(function _from() {
         return this.store.load(paths);
       }.bind(this));
     },
@@ -476,7 +474,7 @@
       if (!fn)
         return this;
 
-      return this.then(function _preprocess(rows) {
+      return this._then(function _preprocess(rows) {
         return fn(rows);
       });
     },
@@ -485,13 +483,17 @@
       if (!predicate)
         return this;
 
-      return this.then(function _filter(rows) {
+      return this._then(function _filter(rows) {
         if (_.isFunction(predicate)) {
           return _.filter(rows, predicate);
         }
         else {
-          var matches = matcher(predicate);
-          return _.filter(rows, matches);
+          return new RSVP.Promise(function(resolve, reject) {
+            _.defer(function() {
+              var matches = matcher(predicate);
+              resolve(_.filter(rows, matches));
+            });
+          });
         }
       });
     },
@@ -506,7 +508,7 @@
       @return {Query}
     */
     groupBy: function groupBy(predicate) {
-      return this.then(function _groupBy(rows) {
+      return this._then(function _groupBy(rows) {
         if (!predicate) {
           // TODO Do this at start of query
           return [{meta: {}, values: rows}];
@@ -565,7 +567,7 @@
       if (!predicate)
         return this;
 
-      return this.then(function _reduce(results) {
+      return this._then(function _reduce(results) {
         var approaches = {
           avg: function(values, column) {
             return approaches.sum(values, column) / values.length;
@@ -608,7 +610,7 @@
       if (!fn)
         return this;
 
-      return this.then(function(groups) {
+      return this._then(function(groups) {
         return RSVP.all(_.map(groups, function(group) {
           return fn(group.values, group.meta);
         })).then(function(results) {
@@ -623,7 +625,7 @@
     },
 
     series: function series(options) {
-      return this.then(function _series(results) {
+      return this._then(function _series(results) {
         // TODO, don't put values directly on the series object (clone first)
         if (!options) {
           // Create series defaults
@@ -847,4 +849,4 @@
     return 'indexOf(' + builder.value(value) + ', ' + builder.resolve(key) + ')';
   };
 
-})(_, RSVP, d3, this);
+})(_, RSVP, d3, typeof global !== 'undefined' ? global : this);
