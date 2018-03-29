@@ -26,14 +26,14 @@ module.exports = function(grunt) {
       options: {
         specs: ['specs/**/*.spec.js'],
         vendor: [
-          'bower_components/lodash/lodash.js',
-          'bower_components/rsvp/rsvp.js',
-          'bower_components/d3/d3.js'
+          'node_modules/lodash/index.js',
+          'node_modules/rsvp/dist/rsvp.js',
+          'node_modules/d3/d3.js'
         ]
       },
 
       src: {
-        src: 'DataManager.js',
+        src: 'data-manager.js',
         options: {
           keepRunner: true,
           outfile: 'specs/index.html'
@@ -41,7 +41,7 @@ module.exports = function(grunt) {
       },
 
       build: {
-        src: 'DataManager.min.js',
+        src: 'data-manager.min.js',
         options: {
           keepRunner: false
         }
@@ -53,7 +53,7 @@ module.exports = function(grunt) {
         'jshintrc': '.jshintrc'
       },
 
-      src: ['DataManager.js'],
+      src: ['data-manager.js'],
       specs: ['specs/*.spec.js']
     },
 
@@ -62,7 +62,7 @@ module.exports = function(grunt) {
         banner: '<%= meta.banner %>',
         sourceMap: true,
         mangle: {
-          except: ['d3', '_', 'rsvp']
+          reserved: ['d3', '_', 'rsvp']
         }
       },
       build: {
@@ -74,11 +74,11 @@ module.exports = function(grunt) {
 
     watch: {
       jshint: {
-        files: ['DataManager.js'],
+        files: ['data-manager.js'],
         tasks: ['jshint:src']
       },
       test: {
-        files: ['DataManager.js', 'specs/**/*.js'],
+        files: ['data-manager.js', 'specs/**/*.js'],
         tasks: ['test']
       }
     }

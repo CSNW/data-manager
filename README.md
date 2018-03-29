@@ -48,5 +48,5 @@ var query = store.query({
 
 # Development
 
-1. Install dependencies: `npm install` and `bower install`
-2. Run specs: `grunt test`
+1. Install dependencies: `npm install` / `yarn`
+2. Run specs: `yarn test`
