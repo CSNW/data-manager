@@ -1,6 +1,6 @@
 (function(d3, _, RSVP, DataManager) {
 
-  describe('DataManager', function() {
+  describe('data-manager', function() {
     var Store = DataManager.Store;
     var Query = DataManager.Query;
     var matcher = DataManager.matcher;
@@ -233,7 +233,7 @@
         });
       });
 
-      describe('loading', function(done) {
+      describe('loading', function() {
         it('should use cast/map given with load or registered cast/map', function(done) {
           store.cast({a: 'Number', b: 'Number'}).map({x: 'a', y: 'b'});
 
