@@ -54,8 +54,7 @@ module.exports = function(grunt) {
       },
 
       src: ['DataManager.js'],
-      specs: ['specs/*.spec.js'],
-      build: ['DataManager.min.js']
+      specs: ['specs/*.spec.js']
     },
 
     uglify: {
