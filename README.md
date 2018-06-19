@@ -184,9 +184,14 @@ async function cloned() {
 }
 ```
 
-## Compiled
+## Macros
 
-In addition to the table and query operations, there are some convenience methods that are part of data-manager that are compiled client-side (using `new Function(...)`) into performant functions that approach hand-written code. These methods are optional and are not part of the standard import for data-manager.
+In addition to the table and query operations, there are some convenience macros that are part of data-manager that are compiled at build time (using babel-plugin-macros) into performant functions that rival hand-written code. These methods are optional and are not part of the standard import for data-manager.
+
+Usage:
+
+1. Add `babel-plugin-macros` as a dev-dependency
+2. Add `"plugins": ["macros"]` to .babelrc (see [macros docs](https://github.com/kentcdodds/babel-plugin-macros/blob/master/other/docs/user.md) for alternatives)
 
 ### cast
 
@@ -194,7 +199,7 @@ Cast a row using the given field mapping.
 
 ```js
 import { table } from 'data-manager';
-import { cast, derived } from 'data-manager/compiled';
+import cast, { derived } from 'data-manager/cast.macro';
 import { toCensusTract } from './utils';
 
 const population = table('data/population.csv', cast({
@@ -207,27 +212,29 @@ const population = table('data/population.csv', cast({
 
 // compiles roughly into:
 //
-// function(mapping) {
-//   return function(row) {
+// (function() {
+//   const mapping = { /* ... */ };
+//
+//   return function cast(row, index, rows) {
 //     return {
 //       'year': mapping['year'](row['year']),
 //       'population': mapping['population'](row['population']),
 //       'state': mapping['state'](row['state']),
 //       'census_tract': mapping['census_tract'](row['census_tract']),
-//       'rename': mapping['rename'](row)
+//       'rename': mapping['rename'](row, index, rows)
 //     };
-//   }
-// }
+//   };
+// })();
 ```
 
 ### match
 
 Use MongoDB-like query syntax to find matching rows.
-Available logic / operations: `$and`, `$or`, `$not`, `$nor`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$ne` (not equal), `$nin` (not in).
+Available logic / operations: `$and`, `$or`, `$not`, `$nor`, `eq`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$ne` (not equal), `$nin` (not in).
 
 ```js
 import { /* ... */ filter } from 'data-manager';
-import { match } from 'data-manager/compiled';
+import match from 'data-manager/match.macro';
 
 async function range(start, end) {
   const results = await store.query(
@@ -235,19 +242,24 @@ async function range(start, end) {
     filter(match({
       year: { $gte: start, $lte: end },
       state: 'VA'
+
+      // equivalent to:
+
+      $and: {
+        year: { $and: { $gte: start, $lte: end } },
+        state: { $eq: 'VA' }
+      }
     }))
   )
 }
 
 // compiles roughly into:
 //
-// function(resolve, equal, includes) {
-//   return function(row) {
-//     return (
-//       ((row['year'] >= ...) && (row['year'] <= ...)),
-//       (equal(row['state'], 'VA'))
-//     );
-//   }
+// function match(row) {
+//   return (
+//     ((row['year'] >= 1) && (row['year'] <= 2))
+//     && (row['state'] === 'VA')
+//   )
 // }
 ```
 
@@ -256,7 +268,7 @@ async function range(start, end) {
 Select the specified keys from the query rows.
 
 ```js
-import { select } from 'data-manager/compiled';
+import select from 'data-manager/select.macro';
 
 async function subset() {
   const results = await store.query(
@@ -275,7 +287,7 @@ async function subset() {
 
 // compiles roughly into:
 //
-// function(row) {
+// function select(row) {
 //   return {
 //     'x': row['year'],
 //     'y': row['population']
