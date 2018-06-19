@@ -1,7 +1,3 @@
-export function table() {
-  // TODO
-}
-
 export function filter() {
   // TODO
 }

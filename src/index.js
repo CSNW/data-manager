@@ -1,6 +1,6 @@
 export { default as Source } from './source';
+export { default as table } from './table';
 export {
-  table,
   filter,
   map,
   sort,

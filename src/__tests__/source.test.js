@@ -1,5 +1,5 @@
 import Source from '../source';
 
-test('source', () => {
+test('should work', () => {
   expect(new Source()).toBeDefined();
 });

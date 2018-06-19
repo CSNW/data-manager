@@ -1,8 +1,9 @@
 node_modules
+dist
+
+.vscode
 npm-debug.log
 yarn-error.log
-
-# OS Junk
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
