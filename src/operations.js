@@ -1,27 +1,43 @@
 export function filter() {
-  // TODO
+  return (series, source) => {
+    // TODO
+  };
 }
 
 export function map() {
-  // TODO
+  return (series, source) => {
+    // TODO
+  };
 }
 
 export function sort() {
-  // TODO
+  return (series, source) => {
+    // TODO
+  };
 }
 
 export function sortBy() {
+  return (series, source) => {
+    // TODO
+  };
+}
+
+function numbersAscending() {
   // TODO
 }
 
 export const compare = {
-  // TODO
+  numbersAscending
 };
 
 export function groupBy() {
-  // TODO
+  return (series, source) => {
+    // TODO
+  };
 }
 
 export function clone() {
-  // TODO
+  return (series, source) => {
+    // TODO
+  };
 }
