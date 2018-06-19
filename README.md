@@ -217,11 +217,11 @@ const population = table('data/population.csv', cast({
 //
 //   return function cast(row, index, rows) {
 //     return {
-//       'year': mapping['year'](row['year']),
-//       'population': mapping['population'](row['population']),
-//       'state': mapping['state'](row['state']),
-//       'census_tract': mapping['census_tract'](row['census_tract']),
-//       'rename': mapping['rename'](row, index, rows)
+//       year: mapping.year(row.year),
+//       population: mapping.population(row.population),
+//       state: mapping.state(row.state),
+//       census_tract: mapping.census_tract(row.census_tract),
+//       rename: mapping.rename(row, index, rows)
 //     };
 //   };
 // })();
@@ -256,10 +256,7 @@ async function range(start, end) {
 // compiles roughly into:
 //
 // function match(row) {
-//   return (
-//     ((row['year'] >= 1) && (row['year'] <= 2))
-//     && (row['state'] === 'VA')
-//   )
+//   return ((row.year >= 1) && (row.year <= 2)) && (row.state === 'VA')
 // }
 ```
 
@@ -289,8 +286,8 @@ async function subset() {
 //
 // function select(row) {
 //   return {
-//     'x': row['year'],
-//     'y': row['population']
+//     x: row.year,
+//     y: row.population
 //   };
 // }
 ```

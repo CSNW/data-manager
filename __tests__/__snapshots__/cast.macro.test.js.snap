@@ -18,7 +18,6 @@ table('data.csv', cast({
 
 import { table } from 'data-manager';
 
-
 const d = value => value;
 
 table('data.csv', function () {
