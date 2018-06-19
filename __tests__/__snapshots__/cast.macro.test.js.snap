@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`macros 1. macros: 1. macros 1`] = `
+"
+import { table } from 'data-manager';
+import cast, { derived } from '../cast.macro';
+
+const d = value => value;
+
+table('data.csv', cast({
+  a: Number,
+  'b c': value => value,
+  d,
+  e: derived(row => row.e)
+}));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { table } from 'data-manager';
+
+
+const d = value => value;
+
+table('data.csv', function () {
+  const mapping = {
+    a: Number,
+    'b c': value => value,
+    d,
+    e: row => row.e
+  };
+  return function (row, index, rows) {
+    return {
+      a: mapping.a(row.a),
+      'b c': mapping['b c'](row['b c']),
+      d: mapping.d(row.d),
+      e: mapping.e(row, index, rows)
+    };
+  };
+}());
+"
+`;
