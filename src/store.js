@@ -1,13 +1,36 @@
 export default class Store {
-  constructor(overrides = {}) {
-    const { fetch = fetchCsv } = overrides;
-    this._fetch = fetch;
+  constructor() {
+    this.cache = new Map();
+    this.loading = new Map();
   }
 
-  fetch(path, map) {
-    return Promise.resolve(this._fetch(path)).then(data => {
-      return map ? data.map(map) : data;
-    });
+  load(path, map) {
+    if (this.cache.has(path)) {
+      return Promise.resolve(this.cache.get(path));
+    }
+    if (this.loading.has(path)) {
+      return this.loading.get(path);
+    }
+
+    const loading = Promise.resolve(this.fetch(path))
+      .then(raw => {
+        return map ? raw.map(map) : raw;
+      })
+      .then(values => {
+        this.cache.set(path, values);
+        this.loading.delete(path);
+
+        return values;
+      });
+
+    this.loading.set(path, loading);
+
+    return loading;
+  }
+
+  fetch(path) {
+    // TODO
+    return [];
   }
 
   query(...operations) {
@@ -15,9 +38,4 @@ export default class Store {
       return loading.then(data => operation(data, this));
     }, Promise.resolve([]));
   }
-}
-
-function fetchCsv(path) {
-  // TODO
-  return [];
 }
