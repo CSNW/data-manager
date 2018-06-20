@@ -2,6 +2,42 @@
 
 Advanced querying and processing for csv data.
 
+Example:
+
+```js
+import { Store, table, filter, groupBy } from 'data-manager';
+import cast from 'data-manager/cast.macro';
+
+const store = new Store();
+const population = table('data/population.csv', cast({
+  year: year => new Date(Number(year), 0, 1),
+  state: String,
+  tract: String,
+  population: Number
+}));
+
+async function all() {
+  const results = await store.query(population);
+
+  // results = [
+  //   { values: [{ year: ..., state: ..., ... }, ...] },
+  // ]
+}
+
+async function forState(state) {
+  const results = await store.query(
+    population,
+    filter(row => row.state === state),
+    groupBy('tract')
+  );
+
+  // results = [
+  //   { group: { tract: ... }, values: [{ year: ..., ... }, ...] },
+  //   ...
+  // ]
+}
+```
+
 ## Store
 
 The store is the central source for downloading, processing, and caching csv data.
