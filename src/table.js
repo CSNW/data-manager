@@ -1,5 +1,5 @@
-export default function table(path, map) {
+export default function table(path, convert) {
   return (_, store) => {
-    return store.load(path, map).then(values => [{ values }]);
+    return store.load(path, convert).then(values => [{ values }]);
   };
 }

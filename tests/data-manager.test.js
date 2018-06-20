@@ -7,11 +7,11 @@ const readFile = promisify(require('fs').readFile);
 import { csvParse } from 'd3-dsv';
 
 class LocalStore extends Store {
-  async fetch(path) {
+  async fetch(path, convert) {
     path = join(__dirname, '__fixtures__', path);
 
     const data = await readFile(path);
-    const values = csvParse(data.toString());
+    const values = csvParse(data.toString(), convert);
 
     return values;
   }
