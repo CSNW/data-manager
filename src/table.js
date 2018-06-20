@@ -1,5 +1,5 @@
 /**
- * Load csv data table for given path.
+ * Load csv data table for given path
  *
  * - On first load, it will fetch, convert, and cache csv
  * - On subsequent loads, will load directly from cache
