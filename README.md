@@ -175,11 +175,17 @@ async function grouped() {
   // Series information can be set with the following:
   const with_key = await store.query(
     population,
-    groupBy('state', 'year', (state, year) => {
-      // `values` is set directly on the returned object
-      return { key: `${state}-${year}`, name: `${state}, ${year}` };
+    groupBy('state', (state, series) => {
+      // `values` is set directly on the returned series
+      series.key = state;
+      return series;
     })
   );
+
+  // with_key = [
+  //   { key: 'AK', values: [...] },
+  //   { key: 'AZ', values: [...] }
+  // ]
 }
 ```
 
