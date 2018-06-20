@@ -1,6 +1,6 @@
 import table from '../table';
 import store from '../__fixtures__/store';
 
-test('should fetch values', () => {
-  expect(table('data.csv')([], store())).resolves.toMatchSnapshot();
+test('should fetch values', async () => {
+  expect(await table('data.csv')([], store())).toMatchSnapshot();
 });

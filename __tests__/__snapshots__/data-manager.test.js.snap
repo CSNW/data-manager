@@ -20,3 +20,37 @@ Array [
   },
 ]
 `;
+
+exports[`should fetch, filter, map, and sort csv data 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 4,
+        "b": 2,
+        "computed": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "computed": 7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "computed": 8,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "computed": 9,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+        "computed": 10,
+      },
+    ],
+  },
+]
+`;
