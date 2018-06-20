@@ -70,6 +70,15 @@ export function clone() {
 }
 
 /**
+ * Clone series objects (does not clone underlying rows)
+ *
+ * @returns {function} operation
+ */
+export function cloneSeries() {
+  return data => data.map(series => shallowCloneObj(series));
+}
+
+/**
  * Group series values by key
  *
  * @example

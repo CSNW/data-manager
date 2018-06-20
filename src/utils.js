@@ -14,10 +14,8 @@ export const compare = {
 
 export function mapValues(data, iterator) {
   return data.map(series => {
-    const mapped = shallowCloneObj(series);
-    mapped.values = iterator(series.values);
-
-    return mapped;
+    series.values = iterator(series.values);
+    return series;
   });
 }
 

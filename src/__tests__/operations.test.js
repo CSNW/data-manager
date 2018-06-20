@@ -4,8 +4,9 @@ import {
   flatMap,
   sort,
   sortBy,
-  groupBy,
-  clone
+  clone,
+  cloneSeries,
+  groupBy
 } from '../operations';
 import * as series from '../../tests/__fixtures__/series';
 
@@ -78,7 +79,17 @@ describe('clone', () => {
     const cloned = clone()(original);
 
     expect(original[0].values[0].a).toEqual(cloned[0].values[0].a);
-    expect(original[0].values[0]).not.toBe(cloned[0].values[0]);
+    expect(original[0].values[0]).toBe(cloned[0].values[0]);
+  });
+});
+
+describe('cloneSeries', () => {
+  test('should clone series objects', () => {
+    const original = series.single();
+    const cloned = cloneSeries()(original);
+
+    expect(original[0].values[0].a).toBe(cloned[0].values[0].a);
+    expect(original[0].values[0]).toEqual(cloned[0].values[0]);
   });
 });
 

@@ -20,13 +20,13 @@ describe('mapValues', () => {
     ).toMatchSnapshot();
   });
 
-  test('should clone series', () => {
+  test('should not clone series', () => {
     const original = series.multi();
     const result = mapValues(original, values =>
       values.filter(row => row.a <= 2)
     );
 
-    expect(original[0]).not.toBe(result[0]);
+    expect(original[0]).toBe(result[0]);
   });
 });
 
