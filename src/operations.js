@@ -135,6 +135,26 @@ export function groupBy(key, toSeries) {
       return series;
     });
 
-  // TODO
-  return data => data;
+  return data =>
+    _flatMap(data, series => {
+      const groups = new Map();
+      series.values.forEach(row => {
+        const id = row[key];
+
+        if (!groups.has(id)) groups.set(id, []);
+        const group = groups.get(id);
+
+        group.push(row);
+      });
+
+      const grouped = [];
+      groups.forEach((values, id) => {
+        const group_series = toSeries(id, shallowCloneObj(series));
+        group_series.values = values;
+
+        grouped.push(group_series);
+      });
+
+      return grouped;
+    });
 }

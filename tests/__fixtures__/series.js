@@ -16,3 +16,24 @@ export function single() {
 export function multi() {
   return [single()[0], single()[0], single()[0]];
 }
+
+export function types() {
+  return [
+    {
+      values: [
+        { type: 'a', y: 0 },
+        { type: 'b', y: 10 },
+        { type: 'a', y: 1 },
+        { type: 'b', y: 8 },
+        { type: 'a', y: 2 },
+        { type: 'b', y: 6 },
+        { type: 'a', y: 3 },
+        { type: 'b', y: 4 },
+        { type: 'a', y: 4 },
+        { type: 'b', y: 2 },
+        { type: 'a', y: 5 },
+        { type: 'b', y: 0 }
+      ]
+    }
+  ];
+}

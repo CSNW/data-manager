@@ -88,13 +88,13 @@ describe('cloneSeries', () => {
     const original = series.single();
     const cloned = cloneSeries()(original);
 
-    expect(original[0].values[0].a).toBe(cloned[0].values[0].a);
-    expect(original[0].values[0]).toEqual(cloned[0].values[0]);
+    expect(original[0].values[0]).toBe(cloned[0].values[0]);
+    expect(original[0]).toEqual(cloned[0]);
   });
 });
 
 describe('groupBy', () => {
-  test('should work', () => {
-    expect(groupBy()).toBeDefined();
+  test('should group by key', () => {
+    expect(groupBy('type')(series.types())).toMatchSnapshot();
   });
 });

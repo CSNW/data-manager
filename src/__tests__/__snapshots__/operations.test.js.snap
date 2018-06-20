@@ -340,6 +340,73 @@ Array [
 ]
 `;
 
+exports[`groupBy should group by key 1`] = `
+Array [
+  Object {
+    "group": Object {
+      "type": "a",
+    },
+    "values": Array [
+      Object {
+        "type": "a",
+        "y": 0,
+      },
+      Object {
+        "type": "a",
+        "y": 1,
+      },
+      Object {
+        "type": "a",
+        "y": 2,
+      },
+      Object {
+        "type": "a",
+        "y": 3,
+      },
+      Object {
+        "type": "a",
+        "y": 4,
+      },
+      Object {
+        "type": "a",
+        "y": 5,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 10,
+      },
+      Object {
+        "type": "b",
+        "y": 8,
+      },
+      Object {
+        "type": "b",
+        "y": 6,
+      },
+      Object {
+        "type": "b",
+        "y": 4,
+      },
+      Object {
+        "type": "b",
+        "y": 2,
+      },
+      Object {
+        "type": "b",
+        "y": 0,
+      },
+    ],
+  },
+]
+`;
+
 exports[`map should map multi series 1`] = `
 Array [
   Object {
