@@ -1,6 +1,6 @@
 import table from '../table';
-import source from '../__fixtures__/source';
+import store from '../__fixtures__/store';
 
 test('should fetch values', () => {
-  expect(table('data.csv')([], source())).resolves.toMatchSnapshot();
+  expect(table('data.csv')([], store())).resolves.toMatchSnapshot();
 });

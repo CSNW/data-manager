@@ -1,21 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should fetch values 1`] = `
+exports[`should fetch and filter csv data 1`] = `
 Array [
   Object {
     "values": Array [
-      Object {
-        "a": 0,
-        "b": 10,
-      },
-      Object {
-        "a": 1,
-        "b": 8,
-      },
-      Object {
-        "a": 2,
-        "b": 6,
-      },
       Object {
         "a": 3,
         "b": 4,

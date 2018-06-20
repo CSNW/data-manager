@@ -1,4 +1,4 @@
-export { default as Source } from './source';
+export { default as Store } from './store';
 export { default as table } from './table';
 export {
   filter,
