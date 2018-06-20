@@ -1,14 +1,12 @@
 import { csv as fetchCsv } from 'd3-fetch';
 
-const identity = value => value;
-
 export default class Store {
   constructor() {
     this.cache = new Map();
     this.loading = new Map();
   }
 
-  load(path, convert = identity) {
+  load(path, convert) {
     if (this.cache.has(path)) {
       return Promise.resolve(this.cache.get(path));
     }
@@ -16,20 +14,24 @@ export default class Store {
       return this.loading.get(path);
     }
 
-    const loading = Promise.resolve(this.fetch(path, convert)).then(values => {
-      this.cache.set(path, values);
-      this.loading.delete(path);
+    const loading = Promise.resolve(this.fetch(path))
+      .then(raw => {
+        return convert ? raw.map(convert).filter(Boolean) : raw;
+      })
+      .then(values => {
+        this.cache.set(path, values);
+        this.loading.delete(path);
 
-      return values;
-    });
+        return values;
+      });
 
     this.loading.set(path, loading);
 
     return loading;
   }
 
-  fetch(path, convert) {
-    return fetchCsv(path, convert);
+  fetch(path) {
+    return fetchCsv(path);
   }
 
   query(...operations) {
