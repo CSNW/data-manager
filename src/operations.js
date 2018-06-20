@@ -26,6 +26,16 @@ export function map(iterator) {
 }
 
 /**
+ * Map series objects
+ *
+ * @param {function} iterator (series, index, data) => series
+ * @returns {function} operation
+ */
+export function mapSeries(iterator) {
+  return data => data.map(iterator);
+}
+
+/**
  * Flat map series values
  *
  * @param {function} iterator (row, index, rows) => row[]

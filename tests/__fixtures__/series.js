@@ -1,4 +1,4 @@
-export function single() {
+function single() {
   return [
     {
       values: [
@@ -13,11 +13,11 @@ export function single() {
   ];
 }
 
-export function multi() {
+function multi() {
   return [single()[0], single()[0], single()[0]];
 }
 
-export function types() {
+function types() {
   return [
     {
       values: [
@@ -37,3 +37,9 @@ export function types() {
     }
   ];
 }
+
+module.exports = {
+  single,
+  multi,
+  types
+};

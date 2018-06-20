@@ -1,21 +1,6 @@
-import { Store, table, filter, map, sortBy, compare } from '../src/index';
+import { Store, table, filter, map, sortBy, compare } from '../';
 import cast, { derived } from '../cast.macro';
-
-import { join } from 'path';
-import { promisify } from 'util';
-const readFile = promisify(require('fs').readFile);
-import { csvParse } from 'd3-dsv';
-
-class LocalStore extends Store {
-  async fetch(path) {
-    path = join(__dirname, '__fixtures__', path);
-
-    const data = await readFile(path);
-    const values = csvParse(data.toString());
-
-    return values;
-  }
-}
+import { FixtureStore } from './__fixtures__/store';
 
 const single = table(
   'data/single.csv',
@@ -26,7 +11,7 @@ const single = table(
 );
 
 test('should fetch and filter csv data', async () => {
-  const store = new LocalStore();
+  const store = new FixtureStore();
 
   const results = await store.query(single, filter(row => row.a > 2));
 
@@ -34,7 +19,7 @@ test('should fetch and filter csv data', async () => {
 });
 
 test('should fetch, filter, map, and sort csv data', async () => {
-  const store = new LocalStore();
+  const store = new FixtureStore();
 
   const results = await store.query(
     single,
@@ -50,7 +35,7 @@ test('should fetch, filter, map, and sort csv data', async () => {
 });
 
 test('should cast csv data with macro', async () => {
-  const store = new LocalStore();
+  const store = new FixtureStore();
 
   const results = await store.query(
     table(

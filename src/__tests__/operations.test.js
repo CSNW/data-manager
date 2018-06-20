@@ -1,6 +1,7 @@
 import {
   filter,
   map,
+  mapSeries,
   flatMap,
   sort,
   sortBy,
@@ -36,6 +37,23 @@ describe('map', () => {
     const mapped = map(mapper)(original);
 
     expect(original[0].values[0]).toBe(mapped[0].values[0]);
+  });
+});
+
+describe('mapSeries', () => {
+  const mapper = (series, index) => {
+    series.index = index;
+    return series;
+  };
+
+  test('should map series', () => {
+    expect(mapSeries(mapper)(series.multi())).toMatchSnapshot();
+  });
+  test('should mutate by default', () => {
+    const original = series.multi();
+    const mapped = mapSeries(mapper)(original);
+
+    expect(original[0]).toBe(mapped[0]);
   });
 });
 

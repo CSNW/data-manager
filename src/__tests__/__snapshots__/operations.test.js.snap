@@ -553,6 +553,98 @@ Array [
 ]
 `;
 
+exports[`mapSeries should map series 1`] = `
+Array [
+  Object {
+    "index": 0,
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "index": 1,
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "index": 2,
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;
+
 exports[`sort should sort multi series 1`] = `
 Array [
   Object {
