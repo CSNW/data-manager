@@ -56,14 +56,23 @@ describe('sort', () => {
 });
 
 describe('sortBy', () => {
-  test('should work', () => {
-    expect(sortBy()).toBeDefined();
+  test('should sortBy single series', () => {
+    expect(sortBy('b', (a, b) => a - b)(series.single())).toMatchSnapshot();
+  });
+  test('should sortBy multi series', () => {
+    expect(sortBy('a', (a, b) => b - a)(series.multi())).toMatchSnapshot();
   });
 });
 
 describe('compare', () => {
   test('should sort numbers ascending', () => {
-    expect(compare.numbersAscending).toBeDefined();
+    expect([2, 4, 1, 3, 5].sort(compare.numbersAscending)).toMatchSnapshot();
+    expect([2, 4, 1, 3, 5].sort(compare.numbersAsc)).toMatchSnapshot();
+  });
+
+  test('should sort numbers descending', () => {
+    expect([2, 4, 1, 3, 5].sort(compare.numbersDescending)).toMatchSnapshot();
+    expect([2, 4, 1, 3, 5].sort(compare.numbersDesc)).toMatchSnapshot();
   });
 });
 

@@ -1,4 +1,4 @@
-import { mapValues } from '../utils';
+import { mapValues, shallowCloneObj } from '../utils';
 import * as series from '../__fixtures__/series';
 
 test('mapValues should map series values', () => {
@@ -14,4 +14,13 @@ test('mapValues should clone series', () => {
   );
 
   expect(original[0]).not.toBe(result[0]);
+});
+
+test('shallowCloneObj should clone object fields', () => {
+  const original = { a: 1, b: { c: 3 } };
+  const cloned = shallowCloneObj(original);
+
+  expect(cloned).not.toBe(original);
+  expect(cloned).toEqual(original);
+  expect(cloned.b).toBe(original.b);
 });

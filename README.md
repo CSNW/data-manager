@@ -148,8 +148,8 @@ async function grouped() {
   );
 
   // results = [
-  //   { groups: { state: 'AK' }, values: [{ year: ..., population: ..., ... }, ...]},
-  //   { groups: { state: 'AZ' }, values: [{ year: ..., population: ..., ... }, ...]},
+  //   { group: { state: 'AK' }, values: [{ year: ..., population: ..., ... }, ...]},
+  //   { group: { state: 'AZ' }, values: [{ year: ..., population: ..., ... }, ...]},
   //   ...
   // ]
 

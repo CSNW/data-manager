@@ -1,10 +1,10 @@
-import { identity, isFunction, shallowClone, mapValues } from './utils';
+import { shallowCloneObj, mapValues } from './utils';
 
-export function filter(iterator = identity) {
+export function filter(iterator) {
   return data => mapValues(data, values => values.filter(iterator));
 }
 
-export function map(iterator = identity) {
+export function map(iterator) {
   return data => mapValues(data, values => values.map(iterator));
 }
 
@@ -13,16 +13,24 @@ export function sort(comparator) {
 }
 
 export function sortBy(key, comparator) {
-  // TODO
-  return data => data;
+  return data =>
+    mapValues(data, values =>
+      values.sort((a, b) => comparator(a[key], b[key]))
+    );
 }
 
 function numbersAscending(a, b) {
   return a - b;
 }
+function numbersDescending(a, b) {
+  return b - a;
+}
 
 export const compare = {
-  numbersAscending
+  numbersAscending,
+  numbersAsc: numbersAscending,
+  numbersDescending,
+  numbersDesc: numbersDescending
 };
 
 const defaultGetSeries = keys => (...values) => {
@@ -31,14 +39,15 @@ const defaultGetSeries = keys => (...values) => {
 };
 
 export function groupBy(...keys) {
-  const getSeries = isFunction(keys[keys.length - 1])
-    ? keys.pop()
-    : defaultGetSeries(keys);
+  const getSeries =
+    typeof keys[keys.length - 1] === 'function'
+      ? keys.pop()
+      : defaultGetSeries(keys);
 
   // TODO
   return data => data;
 }
 
 export function clone() {
-  return data => mapValues(data, values => values.map(shallowClone));
+  return data => mapValues(data, values => values.map(shallowCloneObj));
 }
