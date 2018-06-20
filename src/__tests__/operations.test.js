@@ -1,4 +1,12 @@
-import { filter, map, sort, sortBy, groupBy, clone } from '../operations';
+import {
+  filter,
+  map,
+  flatMap,
+  sort,
+  sortBy,
+  groupBy,
+  clone
+} from '../operations';
 import * as series from '../../tests/__fixtures__/series';
 
 describe('filter', () => {
@@ -11,30 +19,38 @@ describe('filter', () => {
 });
 
 describe('map', () => {
-  test('should filter single series', () => {
-    expect(
-      map(row => {
-        row.c = row.a + row.b;
-        return row;
-      })(series.single())
-    ).toMatchSnapshot();
+  const mapper = row => {
+    row.c = row.a + row.b;
+    return row;
+  };
+
+  test('should map single series', () => {
+    expect(map(mapper)(series.single())).toMatchSnapshot();
   });
-  test('should filter multi series', () => {
-    expect(
-      map(row => {
-        row.c = row.a - row.b;
-        return row;
-      })(series.multi())
-    ).toMatchSnapshot();
+  test('should map multi series', () => {
+    expect(map(mapper)(series.multi())).toMatchSnapshot();
   });
   test('should mutate by default', () => {
     const original = series.single();
-    const mapped = map(row => {
-      row.c = row.a + row.b;
-      return row;
-    })(original);
+    const mapped = map(mapper)(original);
 
     expect(original[0].values[0]).toBe(mapped[0].values[0]);
+  });
+});
+
+describe('flatMap', () => {
+  const mapper = row => {
+    return [
+      { a: row.a, b: row.b, c: row.a + row.b },
+      { a: row.a, b: row.b, c: row.a - row.b }
+    ];
+  };
+
+  test('should flatMap single series', () => {
+    expect(flatMap(mapper)(series.single())).toMatchSnapshot();
+  });
+  test('should flatMap multi series', () => {
+    expect(flatMap(mapper)(series.multi())).toMatchSnapshot();
   });
 });
 

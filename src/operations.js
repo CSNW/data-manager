@@ -1,4 +1,9 @@
-import { compare, mapValues, shallowCloneObj } from './utils';
+import {
+  compare,
+  mapValues,
+  shallowCloneObj,
+  flatMap as _flatMap
+} from './utils';
 
 /**
  * Filter series values to only selected rows
@@ -20,6 +25,26 @@ export function map(iterator) {
   return data => mapValues(data, values => values.map(iterator));
 }
 
+/**
+ * Flat map series values
+ *
+ * @param {function} iterator (row, index, rows) => row[]
+ * @returns {function} operation
+ */
+export function flatMap(iterator) {
+  return data =>
+    data.map(series => {
+      series.values = _flatMap(series.values, iterator);
+      return series;
+    });
+}
+
+/**
+ * Sort series values
+ *
+ * @param {function} comparator (row_a, row_b) => number
+ * @returns {function} operation
+ */
 export function sort(comparator) {
   return data => mapValues(data, values => values.sort(comparator));
 }

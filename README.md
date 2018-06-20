@@ -112,6 +112,27 @@ async function calculated(scale) {
 }
 ```
 
+### flatMap
+
+`flatMap` is similar to `map` but can return multiple rows.
+
+```js
+import { /* ... */ flatMap } from 'data-manager';
+
+async function normalized() {
+  const results = await store.query(
+    population,
+
+    flatMap(row => {
+      return [
+        { value: row.a, type: 'a' },
+        { value: row.b, type: 'b' }
+      ];
+    })
+  );
+}
+```
+
 ### sort and sortBy
 
 `sort` is used to sort the query's rows based on each row and `sortBy` is a convenience method to sort by field.

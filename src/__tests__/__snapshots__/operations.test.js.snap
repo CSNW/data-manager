@@ -74,14 +74,24 @@ Array [
 ]
 `;
 
-exports[`map should filter multi series 1`] = `
+exports[`flatMap should flatMap multi series 1`] = `
 Array [
   Object {
     "values": Array [
       Object {
         "a": 0,
         "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
         "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
       },
       Object {
         "a": 1,
@@ -91,7 +101,17 @@ Array [
       Object {
         "a": 2,
         "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
         "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
       },
       Object {
         "a": 3,
@@ -101,7 +121,17 @@ Array [
       Object {
         "a": 4,
         "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
         "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
       },
       Object {
         "a": 5,
@@ -115,7 +145,17 @@ Array [
       Object {
         "a": 0,
         "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
         "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
       },
       Object {
         "a": 1,
@@ -125,7 +165,17 @@ Array [
       Object {
         "a": 2,
         "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
         "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
       },
       Object {
         "a": 3,
@@ -135,7 +185,17 @@ Array [
       Object {
         "a": 4,
         "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
         "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
       },
       Object {
         "a": 5,
@@ -149,7 +209,17 @@ Array [
       Object {
         "a": 0,
         "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
         "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
       },
       Object {
         "a": 1,
@@ -159,7 +229,17 @@ Array [
       Object {
         "a": 2,
         "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
         "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
       },
       Object {
         "a": 3,
@@ -169,7 +249,17 @@ Array [
       Object {
         "a": 4,
         "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
         "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
       },
       Object {
         "a": 5,
@@ -181,7 +271,183 @@ Array [
 ]
 `;
 
-exports[`map should filter single series 1`] = `
+exports[`flatMap should flatMap single series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": -7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": -1,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`map should map multi series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`map should map single series 1`] = `
 Array [
   Object {
     "values": Array [
