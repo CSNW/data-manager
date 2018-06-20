@@ -1,13 +1,5 @@
-import {
-  filter,
-  map,
-  sort,
-  sortBy,
-  compare,
-  groupBy,
-  clone
-} from '../operations';
-import * as series from '../__fixtures__/series';
+import { filter, map, sort, sortBy, groupBy, clone } from '../operations';
+import * as series from '../../tests/__fixtures__/series';
 
 describe('filter', () => {
   test('should filter single series', () => {
@@ -64,24 +56,6 @@ describe('sortBy', () => {
   });
 });
 
-describe('compare', () => {
-  test('should sort numbers ascending', () => {
-    expect([2, 4, 1, 3, 5].sort(compare.numbersAscending)).toMatchSnapshot();
-    expect([2, 4, 1, 3, 5].sort(compare.numbersAsc)).toMatchSnapshot();
-  });
-
-  test('should sort numbers descending', () => {
-    expect([2, 4, 1, 3, 5].sort(compare.numbersDescending)).toMatchSnapshot();
-    expect([2, 4, 1, 3, 5].sort(compare.numbersDesc)).toMatchSnapshot();
-  });
-});
-
-describe('groupBy', () => {
-  test('should work', () => {
-    expect(groupBy()).toBeDefined();
-  });
-});
-
 describe('clone', () => {
   test('should clone row objects', () => {
     const original = series.single();
@@ -89,5 +63,11 @@ describe('clone', () => {
 
     expect(original[0].values[0].a).toEqual(cloned[0].values[0].a);
     expect(original[0].values[0]).not.toBe(cloned[0].values[0]);
+  });
+});
+
+describe('groupBy', () => {
+  test('should work', () => {
+    expect(groupBy()).toBeDefined();
   });
 });

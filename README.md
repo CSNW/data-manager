@@ -9,9 +9,7 @@ The store is the central source for downloading, processing, and caching csv dat
 ```js
 import { Store } from 'data-manager';
 
-const store = new Store({
-  // overrides for fetch, cache, and process methods
-});
+const store = new Store();
 ```
 
 ## Table

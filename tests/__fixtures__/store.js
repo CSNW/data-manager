@@ -1,4 +1,4 @@
-import Store from '../store';
+import Store from '../../src/store';
 import { single } from './series';
 
 export default function store() {

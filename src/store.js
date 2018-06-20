@@ -1,3 +1,5 @@
+import { csv as fetchCsv } from 'd3-fetch';
+
 export default class Store {
   constructor() {
     this.cache = new Map();
@@ -29,8 +31,7 @@ export default class Store {
   }
 
   fetch(path) {
-    // TODO
-    return [];
+    return fetchCsv(path);
   }
 
   query(...operations) {

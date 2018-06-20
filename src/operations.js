@@ -1,4 +1,4 @@
-import { shallowCloneObj, mapValues } from './utils';
+import { compare, mapValues, shallowCloneObj } from './utils';
 
 export function filter(iterator) {
   return data => mapValues(data, values => values.filter(iterator));
@@ -13,25 +13,12 @@ export function sort(comparator) {
 }
 
 export function sortBy(key, comparator) {
-  return data =>
-    mapValues(data, values =>
-      values.sort((a, b) => comparator(a[key], b[key]))
-    );
+  return sort((a, b) => comparator(a[key], b[key]));
 }
 
-function numbersAscending(a, b) {
-  return a - b;
+export function clone() {
+  return data => mapValues(data, values => values.map(shallowCloneObj));
 }
-function numbersDescending(a, b) {
-  return b - a;
-}
-
-export const compare = {
-  numbersAscending,
-  numbersAsc: numbersAscending,
-  numbersDescending,
-  numbersDesc: numbersDescending
-};
 
 const defaultGetSeries = keys => (...values) => {
   // TODO
@@ -46,8 +33,4 @@ export function groupBy(...keys) {
 
   // TODO
   return data => data;
-}
-
-export function clone() {
-  return data => mapValues(data, values => values.map(shallowCloneObj));
 }
