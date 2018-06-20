@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mapValues should map series values 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;

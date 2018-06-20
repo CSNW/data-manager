@@ -1,0 +1,343 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`filter should filter multi series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+    ],
+  },
+]
+`;
+
+exports[`filter should filter single series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;
+
+exports[`map should filter multi series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": -7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": -1,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": -7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": -1,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": -10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": -7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": -4,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": -1,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`map should filter single series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "c": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "c": 9,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "c": 8,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "c": 7,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "c": 6,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`sort should sort multi series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+    ],
+  },
+]
+`;
+
+exports[`sort should sort single series 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+    ],
+  },
+]
+`;
