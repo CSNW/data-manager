@@ -1,4 +1,5 @@
 import { Store, table, filter, map, sortBy, compare } from '../src/index';
+import cast, { derived } from '../cast.macro';
 import { single } from '../src/__fixtures__/series';
 
 // TODO use real fixture data
@@ -30,6 +31,23 @@ test('should fetch, filter, map, and sort csv data', async () => {
       return row;
     }),
     sortBy('a', compare.numbersDescending)
+  );
+
+  expect(results).toMatchSnapshot();
+});
+
+test('should cast csv data with macro', async () => {
+  const store = new MockStore();
+
+  const results = await store.query(
+    table(
+      'data.csv',
+      cast({
+        a: value => `a = ${value}`,
+        b: value => `b = ${value}`,
+        c: derived(row => row.a + row.b)
+      })
+    )
   );
 
   expect(results).toMatchSnapshot();

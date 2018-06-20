@@ -1,5 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`should cast csv data with macro 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": "a = 0",
+        "b": "b = 10",
+        "c": 10,
+      },
+      Object {
+        "a": "a = 1",
+        "b": "b = 8",
+        "c": 9,
+      },
+      Object {
+        "a": "a = 2",
+        "b": "b = 6",
+        "c": 8,
+      },
+      Object {
+        "a": "a = 3",
+        "b": "b = 4",
+        "c": 7,
+      },
+      Object {
+        "a": "a = 4",
+        "b": "b = 2",
+        "c": 6,
+      },
+      Object {
+        "a": "a = 5",
+        "b": "b = 0",
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
 exports[`should fetch and filter csv data 1`] = `
 Array [
   Object {
