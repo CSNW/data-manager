@@ -2,39 +2,43 @@ const { createMacro } = require('babel-plugin-macros');
 
 module.exports = createMacro(cast);
 
-// Before:
-//
-// const c = value => value;
-//
-// cast({
-//   a: Number,
-//   b: value => value,
-//   c,
-//   f: derived(row => row.d + row.e)
-// });
-//
-// After:
-//
-// const c = value => value;
-//
-// (function() {
-//   const mapping = {
-//     a: Number,
-//     b: value => value
-//     c,
-//     f: row => row.d + row.e
-//   };
-//
-//   return function(row, index, rows) {
-//     return {
-//       a: mapping.a(row.a),
-//       b: mapping.b(row.b),
-//       c: mapping.c(row.c),
-//       f: mapping.f(row, index, rows)
-//     };
-//   };
-// })()
-
+/**
+ * @example
+ * ```js
+ * import { table } from 'data-manager';
+ * import cast, { derived } from 'data-manager/cast.macro';
+ *
+ * const today = new Date();
+ * const population = table('data/population.csv', cast({
+ *   year: year => new Date(Number(year), 0, 1),
+ *   state: String,
+ *   population: Number,
+ *   age: derived(row => today - new Date(Number(row.year), 0, 1))
+ * }))
+ *
+ * // transforms at build-time into:
+ *
+ * const population = table('data/population.csv', (function() {
+ *   const mapping = {
+ *     year: year => new Date(Number(year), 0, 1),
+ *     state: String,
+ *     population: Number,
+ *     age: derived(row => today - new Date(Number(row.year), 0, 1))
+ *   };
+ *
+ *   return function cast(row, index, rows) {
+ *     return {
+ *       year: mapping.year(row.year),
+ *       state: mapping.state(row.state),
+ *       population: mapping.population(row.population),
+ *       age: mapping.age(row, index, rows)
+ *     };
+ *   }
+ * }())
+ * ```
+ * @param {object} mapping by field name
+ * @returns {function}
+ */
 function cast({ references, state, babel: { template, types: t } }) {
   const paths = references.default;
   const derived_nodes = (references.derived || []).map(path => path.parent);
@@ -44,7 +48,7 @@ function cast({ references, state, babel: { template, types: t } }) {
   const buildCast = template(`(function() {
     const mapping = MAPPING;
 
-    return function(row, index, rows) {
+    return function cast(row, index, rows) {
       return CAST;
     }
   })()`);

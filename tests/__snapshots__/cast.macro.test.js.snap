@@ -27,7 +27,7 @@ table('data.csv', function () {
     d,
     e: row => row.e
   };
-  return function (row, index, rows) {
+  return function cast(row, index, rows) {
     return {
       a: mapping.a(row.a),
       'b c': mapping['b c'](row['b c']),
