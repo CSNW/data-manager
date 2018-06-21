@@ -317,7 +317,7 @@ async function range(start, end) {
 // compiles roughly into:
 //
 // function match(row) {
-//   return ((row.year >= 1) && (row.year <= 2)) && (row.state === 'VA')
+//   return row.year >= 1 && row.year <= 2 && row.state === 'VA'
 // }
 ```
 

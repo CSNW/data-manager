@@ -54,6 +54,7 @@ test('should cast csv data with macro', async () => {
 
 test('should match csv data with macro', async () => {
   const store = new FixtureStore();
+
   const results = await store.query(single, filter(match({ a: { $lte: 2 } })));
 
   expect(results).toMatchSnapshot();
