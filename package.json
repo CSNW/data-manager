@@ -17,6 +17,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rollup -c",
+    "pretest": "npm run build",
     "test": "jest"
   },
   "dependencies": {
