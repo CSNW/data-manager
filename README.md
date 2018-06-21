@@ -363,6 +363,91 @@ async function subset() {
 }
 ```
 
+## Upgrading from v0.8.0
+
+Before:
+
+```js
+var store = new DataManager.Store();
+
+// Register default cast and map for store
+store.cast({
+  a: 'Number',
+  b: 'Boolean',
+  c: 'Date',
+  d1: 'Number',
+  d2: 'Number'
+});
+store.map({
+  x: 'a',
+  y: {
+    columns: ['d1', 'd2'],
+    category: 'type'
+  }
+});
+
+// {a, b, c, d1, d2} -> [
+//   {x: a, y: d1, type: 'd1', b, c},
+//   {x: a, y: d2, type: 'd2', b, c}
+// ]
+
+// Create query
+var query = store.query({
+  from: ['file.csv'],
+  filter: {
+    x: {$gt: 0, $lte: 100}
+  },
+  groupBy: 'type',
+  series: [
+    {meta: {type: 'd1'}, key: 'd1-series', name: 'D1 Series'},
+    {meta: {type: 'd2'}, key: 'd2-series', name: 'D2 Series'}
+  ]
+}).then(function(results) {
+  // Whenever data is loaded in store, run query and get values
+  // -> results: [
+  //      {key: 'd1-series', ..., values: [{x: a, y: d1, type: 'd1', ...}, ...]}
+  //      {key: 'd2-series', ..., values: [{x: a, y: d2, type: 'd2', ...}, ...]}
+  //    ]
+});
+```
+
+After:
+
+```js
+import { Store, table, filter, groupBy, flow } from 'data-manager';
+import cast from 'data-manager/cast.macro';
+import normalize from 'data-manager/normalize.macro';
+import match from 'data-manager/match.macro';
+
+const store = new Store();
+const file = table('file.csv', flow(
+  cast({
+    a: Number,
+    b: b => b === 'true',
+    c: c => new Date(c),
+    d1: Number,
+    d2: Number
+  }),
+  normalize({
+    x: 'a',
+    y: {
+      columns: ['d1', 'd2'],
+      category: 'type'
+    }
+  })
+));
+
+const results = await store.query(
+  file,
+  filter(match({
+    x: { $gt: 0, $lte: 100 }
+  })),
+  groupBy('type', type => {
+    return { meta: { type }, key: `${type}-series`, name: `${type.toUpperCase()} Series` };
+  })
+)
+```
+
 ## Development
 
 1. Install dependencies: `npm install` / `yarn`
