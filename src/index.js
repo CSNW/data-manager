@@ -8,6 +8,7 @@ export {
   sortBy,
   clone,
   cloneSeries,
-  groupBy
+  groupBy,
+  from
 } from './operations';
 export { compare } from './utils';

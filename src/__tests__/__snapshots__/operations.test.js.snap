@@ -340,6 +340,105 @@ Array [
 ]
 `;
 
+exports[`from should merge data from multiple tables 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+        "from": "a",
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "from": "a",
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "from": "a",
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "from": "a",
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "from": "a",
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "from": "a",
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+        "from": "b",
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "from": "b",
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "from": "b",
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "from": "b",
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "from": "b",
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "from": "b",
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+        "from": "c",
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "from": "c",
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "from": "c",
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "from": "c",
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+        "from": "c",
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+        "from": "c",
+      },
+    ],
+  },
+]
+`;
+
 exports[`groupBy should group by key 1`] = `
 Array [
   Object {

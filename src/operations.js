@@ -168,3 +168,32 @@ export function groupBy(key, toSeries) {
       return grouped;
     });
 }
+
+/**
+ * Merge data from given tables
+ *
+ * @example
+ * ```js
+ * store.query(
+ *   from(table('a.csv'), table('b.csv'), table('c.csv'))
+ * )
+ * ```
+ * @param {function[]} ...tables
+ * @returns {function} operation
+ */
+export function from(...tables) {
+  const mergeSeriesValues = data =>
+    data.reduce((values, series) => values.concat(series.values), []);
+
+  return (data, store) => {
+    return Promise.all(tables.map(table => table(data, store))).then(
+      results => {
+        const values = results.reduce((combined, data) => {
+          return combined.concat(mergeSeriesValues(data));
+        }, []);
+
+        return [{ values }];
+      }
+    );
+  };
+}

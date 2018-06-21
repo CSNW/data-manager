@@ -7,9 +7,12 @@ import {
   sortBy,
   clone,
   cloneSeries,
-  groupBy
+  groupBy,
+  from
 } from '../operations';
+import table from '../table';
 import * as series from '../../tests/__fixtures__/series';
+import { store } from '../../tests/__fixtures__/store';
 
 describe('filter', () => {
   test('should filter single series', () => {
@@ -121,6 +124,27 @@ describe('groupBy', () => {
       groupBy('y')(
         groupBy('type')(sortBy('y', (a, b) => a - b)(series.types()))
       )
+    ).toMatchSnapshot();
+  });
+});
+
+describe('from', () => {
+  test('should merge data from multiple tables', async () => {
+    expect(
+      await from(
+        table('a.csv', row => {
+          row.from = 'a';
+          return row;
+        }),
+        table('b.csv', row => {
+          row.from = 'b';
+          return row;
+        }),
+        table('c.csv', row => {
+          row.from = 'c';
+          return row;
+        })
+      )([], store())
     ).toMatchSnapshot();
   });
 });
