@@ -31,7 +31,7 @@ function match({ references, state, babel: { template, types: t } }) {
   const paths = references.default;
   if (!paths || !paths.length) return;
 
-  const buildMatch = template(`value => {
+  const buildMatch = template(`row => {
     return LOGIC;
   }`);
 
