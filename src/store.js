@@ -1,4 +1,5 @@
 import { csv as fetchCsv } from 'd3-fetch';
+import { flatMap } from './utils';
 
 /**
  * Central store for csv data tables with caching and pre-processing
@@ -27,7 +28,7 @@ export default class Store {
 
     const loading = Promise.resolve(this.fetch(path))
       .then(raw => {
-        return convert ? raw.map(convert).filter(Boolean) : raw;
+        return convert ? flatMap(raw, convert).filter(Boolean) : raw;
       })
       .then(values => {
         this.cache.set(path, values);
