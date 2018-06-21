@@ -65,7 +65,7 @@ function select({ references, state, babel: { template, types: t } }) {
       });
     }
 
-    const SELECT = t.objectExpression(properties || []);
+    const SELECT = t.objectExpression(properties);
 
     const select = buildSelect({ SELECT });
     section_path.replaceWith(select);

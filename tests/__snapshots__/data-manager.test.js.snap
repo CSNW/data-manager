@@ -148,6 +148,113 @@ Array [
 ]
 `;
 
+exports[`should normalize csv with macro 1`] = `
+Array [
+  Object {
+    "group": Object {
+      "type": "b",
+    },
+    "values": Array [
+      Object {
+        "x": 2000,
+        "y": 0,
+      },
+      Object {
+        "x": 2001,
+        "y": 1,
+      },
+      Object {
+        "x": 2002,
+        "y": 2,
+      },
+      Object {
+        "x": 2003,
+        "y": 3,
+      },
+      Object {
+        "x": 2004,
+        "y": 4,
+      },
+      Object {
+        "x": 2005,
+        "y": 5,
+      },
+      Object {
+        "x": 2006,
+        "y": 6,
+      },
+      Object {
+        "x": 2007,
+        "y": 7,
+      },
+      Object {
+        "x": 2008,
+        "y": 8,
+      },
+      Object {
+        "x": 2009,
+        "y": 9,
+      },
+      Object {
+        "x": 2010,
+        "y": 10,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "c",
+    },
+    "values": Array [
+      Object {
+        "x": 2000,
+        "y": 0,
+      },
+      Object {
+        "x": 2001,
+        "y": 0.1,
+      },
+      Object {
+        "x": 2002,
+        "y": 0.2,
+      },
+      Object {
+        "x": 2003,
+        "y": 0.3,
+      },
+      Object {
+        "x": 2004,
+        "y": 0.4,
+      },
+      Object {
+        "x": 2005,
+        "y": 0.5,
+      },
+      Object {
+        "x": 2006,
+        "y": 0.6,
+      },
+      Object {
+        "x": 2007,
+        "y": 0.7,
+      },
+      Object {
+        "x": 2008,
+        "y": 0.8,
+      },
+      Object {
+        "x": 2009,
+        "y": 0.9,
+      },
+      Object {
+        "x": 2010,
+        "y": 1,
+      },
+    ],
+  },
+]
+`;
+
 exports[`should select csv data with macro 1`] = `
 Array [
   Object {

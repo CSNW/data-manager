@@ -12,6 +12,7 @@ import {
 import cast, { derived } from '../cast.macro';
 import match from '../match.macro';
 import select from '../select.macro';
+import normalize from '../normalize.macro';
 import { FixtureStore } from './__fixtures__/store';
 
 const single = table(
@@ -122,6 +123,33 @@ test('should combine multiple convert steps with flow', async () => {
   );
 
   const results = await store.query(table('data/single.csv', convert));
+
+  expect(results).toMatchSnapshot();
+});
+
+test('should normalize csv with macro', async () => {
+  const store = new FixtureStore();
+
+  const convert = flow(
+    cast({
+      a: Number,
+      b: Number,
+      c: Number
+    }),
+    normalize({
+      x: 'a',
+      y: {
+        columns: ['b', 'c'],
+        category: 'type'
+      }
+    })
+  );
+
+  const results = await store.query(
+    table('data/a.csv', convert),
+    groupBy('type'),
+    map(select('x', 'y'))
+  );
 
   expect(results).toMatchSnapshot();
 });
