@@ -29,9 +29,9 @@ function types() {
         { type: 'b', y: 6 },
         { type: 'a', y: 3 },
         { type: 'b', y: 4 },
-        { type: 'a', y: 4 },
+        { type: 'a', y: 3 },
         { type: 'b', y: 2 },
-        { type: 'a', y: 5 },
+        { type: 'a', y: 2 },
         { type: 'b', y: 0 }
       ]
     }

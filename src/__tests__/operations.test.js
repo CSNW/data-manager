@@ -115,4 +115,12 @@ describe('groupBy', () => {
   test('should group by key', () => {
     expect(groupBy('type')(series.types())).toMatchSnapshot();
   });
+
+  test('should perform multiple group by key', () => {
+    expect(
+      groupBy('y')(
+        groupBy('type')(sortBy('y', (a, b) => a - b)(series.types()))
+      )
+    ).toMatchSnapshot();
+  });
 });

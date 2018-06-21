@@ -139,7 +139,7 @@ export function groupBy(key, toSeries) {
   toSeries =
     toSeries ||
     ((value, series) => {
-      series.group = series.group || {};
+      series.group = series.group ? shallowCloneObj(series.group) : {};
       series.group[key] = value;
 
       return series;

@@ -334,6 +334,16 @@ async function subset() {
     select('year', 'census_tract', 'population')
   )
 
+  // compiles roughly into:
+  //
+  // function select(row) {
+  //   return {
+  //     'year': row['year'],
+  //     'census_tract': row['census_tract'],
+  //     'population': row['population']
+  //   };
+  // }
+
   const mapped = await store.query(
     population,
     select({
@@ -341,16 +351,16 @@ async function subset() {
       y: 'population'
     })
   )
-}
 
-// compiles roughly into:
-//
-// function select(row) {
-//   return {
-//     x: row.year,
-//     y: row.population
-//   };
-// }
+  // compiles roughly into:
+  //
+  // function select(row) {
+  //   return {
+  //     x: row['year'],
+  //     y: row['population']
+  //   };
+  // }
+}
 ```
 
 ## Development

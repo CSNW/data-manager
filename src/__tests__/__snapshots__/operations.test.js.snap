@@ -365,11 +365,11 @@ Array [
       },
       Object {
         "type": "a",
-        "y": 4,
+        "y": 3,
       },
       Object {
         "type": "a",
-        "y": 5,
+        "y": 2,
       },
     ],
   },
@@ -401,6 +401,139 @@ Array [
       Object {
         "type": "b",
         "y": 0,
+      },
+    ],
+  },
+]
+`;
+
+exports[`groupBy should perform multiple group by key 1`] = `
+Array [
+  Object {
+    "group": Object {
+      "type": "a",
+      "y": 0,
+    },
+    "values": Array [
+      Object {
+        "type": "a",
+        "y": 0,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "a",
+      "y": 1,
+    },
+    "values": Array [
+      Object {
+        "type": "a",
+        "y": 1,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "a",
+      "y": 2,
+    },
+    "values": Array [
+      Object {
+        "type": "a",
+        "y": 2,
+      },
+      Object {
+        "type": "a",
+        "y": 2,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "a",
+      "y": 3,
+    },
+    "values": Array [
+      Object {
+        "type": "a",
+        "y": 3,
+      },
+      Object {
+        "type": "a",
+        "y": 3,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 0,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 0,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 2,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 2,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 4,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 4,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 6,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 6,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 8,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 8,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "b",
+      "y": 10,
+    },
+    "values": Array [
+      Object {
+        "type": "b",
+        "y": 10,
       },
     ],
   },
