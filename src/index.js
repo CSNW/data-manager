@@ -11,4 +11,4 @@ export {
   groupBy,
   from
 } from './operations';
-export { compare } from './utils';
+export { compare, flow } from './utils';

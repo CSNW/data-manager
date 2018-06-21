@@ -50,13 +50,18 @@ function select({ references, state, babel: { template, types: t } }) {
         const computed = !t.isStringLiteral(element);
         return t.objectProperty(element, row(element), computed);
       });
-    } else {
+    } else if (t.isObjectExpression(mapping)) {
       properties = mapping.properties.map(property => {
         return t.objectProperty(
           property.key,
           row(property.value),
           property.computed
         );
+      });
+    } else {
+      properties = section_path.node.arguments.map(arg => {
+        const computed = !t.isStringLiteral(arg);
+        return t.objectProperty(arg, row(arg), computed);
       });
     }
 

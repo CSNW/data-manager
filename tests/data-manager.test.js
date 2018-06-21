@@ -1,4 +1,14 @@
-import { Store, table, from, filter, map, sortBy, compare, groupBy } from '../';
+import {
+  Store,
+  table,
+  from,
+  filter,
+  map,
+  sortBy,
+  compare,
+  groupBy,
+  flow
+} from '../';
 import cast, { derived } from '../cast.macro';
 import match from '../match.macro';
 import select from '../select.macro';
@@ -95,6 +105,23 @@ test('should work with multiple csv', async () => {
     ),
     groupBy('from')
   );
+
+  expect(results).toMatchSnapshot();
+});
+
+test('should combine multiple convert steps with flow', async () => {
+  const store = new FixtureStore();
+
+  const convert = flow(
+    cast({
+      a: value => `a = ${value}`,
+      b: value => `b = ${value}`,
+      c: derived(row => Number(row.a) + Number(row.b))
+    }),
+    select('a', 'c')
+  );
+
+  const results = await store.query(table('data/single.csv', convert));
 
   expect(results).toMatchSnapshot();
 });

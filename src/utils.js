@@ -52,3 +52,22 @@ export function flatMap(values, iterator, context) {
 
   return flattened;
 }
+
+/**
+ * Compose the given functions and call then from first to last
+ *
+ * @example
+ * ```js
+ * const cast = row => row;
+ * const select = row => row;
+ * const filter = row => row;
+ *
+ * const convert = flow(cast, select, filter);
+ * // convert = row => cast(row) => select(row) => filter(row)
+ * ```
+ * @param {function[]} fns
+ * @returns {function}
+ */
+export function flow(...fns) {
+  return value => fns.reduce((memo, fn) => fn(memo), value);
+}

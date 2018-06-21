@@ -7,7 +7,7 @@ import select from '../select.macro';
 
 const name = 'Population'
 
-map(select(['Year', name]));
+map(select('Year', name));
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -23,6 +23,28 @@ map(row => {
 `;
 
 exports[`macros 2. macros: 2. macros 1`] = `
+"
+import { map } from 'data-manager';
+import select from '../select.macro';
+
+const name = 'Population'
+
+map(select(['Year', name]));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { map } from 'data-manager';
+const name = 'Population';
+map(row => {
+  return {
+    'Year': row['Year'],
+    [name]: row[name]
+  };
+});
+"
+`;
+
+exports[`macros 3. macros: 3. macros 1`] = `
 "
 import { map } from 'data-manager';
 import select from '../select.macro';

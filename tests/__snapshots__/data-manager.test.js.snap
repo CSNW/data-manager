@@ -39,6 +39,39 @@ Array [
 ]
 `;
 
+exports[`should combine multiple convert steps with flow 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": "a = 0",
+        "c": 10,
+      },
+      Object {
+        "a": "a = 1",
+        "c": 9,
+      },
+      Object {
+        "a": "a = 2",
+        "c": 8,
+      },
+      Object {
+        "a": "a = 3",
+        "c": 7,
+      },
+      Object {
+        "a": "a = 4",
+        "c": 6,
+      },
+      Object {
+        "a": "a = 5",
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
 exports[`should fetch and filter csv data 1`] = `
 Array [
   Object {

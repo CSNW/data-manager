@@ -12,6 +12,14 @@ pluginTester({
 
       const name = 'Population'
 
+      map(select('Year', name));
+    `,
+    `
+      import { map } from 'data-manager';
+      import select from '../select.macro';
+
+      const name = 'Population'
+
       map(select(['Year', name]));
     `,
     `
