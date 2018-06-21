@@ -20,14 +20,14 @@ import { table } from 'data-manager';
 
 const d = value => value;
 
-table('data.csv', function () {
+table('data.csv', (() => {
   const mapping = {
     a: Number,
     'b c': value => value,
     d,
     e: row => row.e
   };
-  return function cast(row, index, rows) {
+  return (row, index, rows) => {
     return {
       a: mapping.a(row.a),
       'b c': mapping['b c'](row['b c']),
@@ -35,6 +35,6 @@ table('data.csv', function () {
       e: mapping.e(row, index, rows)
     };
   };
-}());
+})());
 "
 `;

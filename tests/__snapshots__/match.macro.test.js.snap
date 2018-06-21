@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`macros 1. macros: 1. macros 1`] = `
+"
+import { filter } from 'data-manager';
+import match from '../match.macro';
+
+filter(match({
+  a: 1,
+  b: 2,
+  c: 3
+}))
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { filter } from 'data-manager';
+filter(value => {
+  return row.a === 1 && row.b === 2 && row.c === 3;
+});
+"
+`;
+
+exports[`macros 2. macros: 2. macros 1`] = `
+"
+import { filter } from 'data-manager';
+import match from '../match.macro';
+
+const min = 0;
+const max = 100;
+const values = [1, 2, 3];
+
+filter(match({
+  // conditions
+  a: 1,
+  b: { $eq: 2 },
+  'c': { $ne: true },
+  d: { $gt: 0, $lt: 100},
+  e: { $gte: min, $lte: max},
+  'f': { $in: [1, 2, 3] },
+  g: { $nin: values }
+}))
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { filter } from 'data-manager';
+const min = 0;
+const max = 100;
+const values = [1, 2, 3];
+filter(value => {
+  return row.a === 1 && row.b === 2 && row['c'] !== true && row.d > 0 && row.d < 100 && row.e >= min && row.e <= max && [1, 2, 3].includes(row['f']) && !values.includes(row.g);
+});
+"
+`;
+
+exports[`macros 3. macros: 3. macros 1`] = `
+"
+import { filter } from 'data-manager';
+import match from '../match.macro';
+
+const min = 0;
+const max = 100;
+const values = [1, 2, 3];
+
+filter(match({
+  // logic
+  $and: { a: 1, b: 2 },
+  $or: { a: { $gt: 1 }, b: { $lt: 1 } },
+  $not: { a: 1, b: 2 },
+  $nor: { a: { $gt: 1 }, b: { $lt: 1 } }
+}))
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { filter } from 'data-manager';
+const min = 0;
+const max = 100;
+const values = [1, 2, 3];
+filter(value => {
+  return row.a === 1 && row.b === 2 && (row.a > 1 || row.b < 1) && !(row.a === 1 && row.b === 2) && !(row.a > 1) && !(row.b < 1);
+});
+"
+`;

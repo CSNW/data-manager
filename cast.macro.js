@@ -18,7 +18,7 @@ module.exports = createMacro(cast);
  *
  * // transforms at build-time into:
  *
- * const population = table('data/population.csv', (function() {
+ * const population = table('data/population.csv', (() => {
  *   const mapping = {
  *     year: year => new Date(Number(year), 0, 1),
  *     state: String,
@@ -26,7 +26,7 @@ module.exports = createMacro(cast);
  *     age: derived(row => today - new Date(Number(row.year), 0, 1))
  *   };
  *
- *   return function cast(row, index, rows) {
+ *   return (row, index, rows) => {
  *     return {
  *       year: mapping.year(row.year),
  *       state: mapping.state(row.state),
@@ -34,7 +34,7 @@ module.exports = createMacro(cast);
  *       age: mapping.age(row, index, rows)
  *     };
  *   }
- * }())
+ * })()
  * ```
  * @param {object} mapping by field name
  * @returns {function}
@@ -45,12 +45,11 @@ function cast({ references, state, babel: { template, types: t } }) {
 
   if (!paths || !paths.length) return;
 
-  const buildCast = template(`(function() {
+  const buildCast = template(`(() => {
     const mapping = MAPPING;
-
-    return function cast(row, index, rows) {
+    return (row, index, rows) => {
       return CAST;
-    }
+    };
   })()`);
 
   for (const identifier_path of paths) {
