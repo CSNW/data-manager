@@ -24,7 +24,7 @@ module.exports = createMacro(match);
  *   return row.a === 10 && (row.b < 0 || row.b > 100) && [1, 2, 3].includes(row.c)
  * })
  * ```
- * @param {object} mapping by field name
+ * @param {object} query
  * @returns {function}
  */
 function match({ references, state, babel: { template, types: t } }) {
@@ -43,10 +43,7 @@ function match({ references, state, babel: { template, types: t } }) {
     // Create match logic
     const LOGIC = logical.$and(undefined, properties, t);
 
-    const match = buildMatch({
-      LOGIC
-    });
-
+    const match = buildMatch({ LOGIC });
     section_path.replaceWith(match);
   }
 }
@@ -58,7 +55,7 @@ function evaluate(context, property, t) {
     return logical[key](context, property.value.properties, t);
   } else if (key in comparison) {
     return comparison[key](context, property.value, t);
-  } else if (property.value.type === 'ObjectExpression') {
+  } else if (t.isObjectExpression(property.value)) {
     return logical.$and(property.key, property.value.properties, t);
   } else {
     return comparison.$eq(property.key, property.value, t);

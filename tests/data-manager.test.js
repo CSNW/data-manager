@@ -1,6 +1,7 @@
 import { Store, table, filter, map, sortBy, compare } from '../';
 import cast, { derived } from '../cast.macro';
 import match from '../match.macro';
+import select from '../select.macro';
 import { FixtureStore } from './__fixtures__/store';
 
 const single = table(
@@ -56,6 +57,14 @@ test('should match csv data with macro', async () => {
   const store = new FixtureStore();
 
   const results = await store.query(single, filter(match({ a: { $lte: 2 } })));
+
+  expect(results).toMatchSnapshot();
+});
+
+test('should select csv data with macro', async () => {
+  const store = new FixtureStore();
+
+  const results = await store.query(single, map(select({ A: 'a', B: 'b' })));
 
   expect(results).toMatchSnapshot();
 });

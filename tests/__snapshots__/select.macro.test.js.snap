@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`macros 1. macros: 1. macros 1`] = `
+"
+import { map } from 'data-manager';
+import select from '../select.macro';
+
+const name = 'Population'
+
+map(select(['Year', name]));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { map } from 'data-manager';
+const name = 'Population';
+map(row => {
+  return {
+    'Year': row['Year'],
+    [name]: row[name]
+  };
+});
+"
+`;
+
+exports[`macros 2. macros: 2. macros 1`] = `
+"
+import { map } from 'data-manager';
+import select from '../select.macro';
+
+const name = 'Population';
+const state = 'state';
+const tract = 'tract';
+
+map(select({
+  year: 'Year',
+  'population': name,
+  [state]: state,
+  tract
+}));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { map } from 'data-manager';
+const name = 'Population';
+const state = 'state';
+const tract = 'tract';
+map(row => {
+  return {
+    year: row['Year'],
+    'population': row[name],
+    [state]: row[state],
+    tract: row[tract]
+  };
+});
+"
+`;

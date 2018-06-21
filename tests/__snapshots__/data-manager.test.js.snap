@@ -114,3 +114,36 @@ Array [
   },
 ]
 `;
+
+exports[`should select csv data with macro 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "A": 0,
+        "B": 10,
+      },
+      Object {
+        "A": 1,
+        "B": 8,
+      },
+      Object {
+        "A": 2,
+        "B": 6,
+      },
+      Object {
+        "A": 3,
+        "B": 4,
+      },
+      Object {
+        "A": 4,
+        "B": 2,
+      },
+      Object {
+        "A": 5,
+        "B": 0,
+      },
+    ],
+  },
+]
+`;
