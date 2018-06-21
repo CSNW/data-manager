@@ -1,11 +1,9 @@
 node_modules
-bower_components
-.grunt
-specs/index.html
+dist
+
+.vscode
 npm-debug.log
 yarn-error.log
-
-# OS Junk
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/

@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`macros 1. macros: 1. macros 1`] = `
+"
+import { flatMap } from 'data-manager';
+import normalize from '../normalize.macro';
+
+const b = 'b';
+const d = 'd';
+
+flatMap(normalize({
+  a: 'a',
+  b,
+  y: {
+    columns: ['c', d],
+    category: 'type'
+  }
+}));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { flatMap } from 'data-manager';
+const b = 'b';
+const d = 'd';
+flatMap(row => {
+  return [{
+    a: row['a'],
+    b: row[b],
+    y: row['c'],
+    'type': 'c'
+  }, {
+    a: row['a'],
+    b: row[b],
+    y: row[d],
+    'type': d
+  }];
+});
+"
+`;
+
+exports[`macros 2. macros: 2. macros 1`] = `
+"
+import { flatMap } from 'data-manager';
+import normalize from '../normalize.macro';
+
+const b = 'b';
+
+flatMap(normalize({
+  a: 'a',
+  b,
+  y: {
+    columns: ['c', 'd'],
+    categories: {
+      c: { isC: true, isD: false },
+      d: { isC: false, isD: true },
+    }
+  }
+}));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { flatMap } from 'data-manager';
+const b = 'b';
+flatMap(row => {
+  return [{
+    a: row['a'],
+    b: row[b],
+    y: row['c'],
+    isC: true,
+    isD: false
+  }, {
+    a: row['a'],
+    b: row[b],
+    y: row['d'],
+    isC: false,
+    isD: true
+  }];
+});
+"
+`;

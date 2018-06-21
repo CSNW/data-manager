@@ -1,0 +1,769 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should cast csv data with macro 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": "a = 0",
+        "b": "b = 10",
+        "c": 10,
+      },
+      Object {
+        "a": "a = 1",
+        "b": "b = 8",
+        "c": 9,
+      },
+      Object {
+        "a": "a = 2",
+        "b": "b = 6",
+        "c": 8,
+      },
+      Object {
+        "a": "a = 3",
+        "b": "b = 4",
+        "c": 7,
+      },
+      Object {
+        "a": "a = 4",
+        "b": "b = 2",
+        "c": 6,
+      },
+      Object {
+        "a": "a = 5",
+        "b": "b = 0",
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should combine multiple convert steps with flow 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": "a = 0",
+        "c": 10,
+      },
+      Object {
+        "a": "a = 1",
+        "c": 9,
+      },
+      Object {
+        "a": "a = 2",
+        "c": 8,
+      },
+      Object {
+        "a": "a = 3",
+        "c": 7,
+      },
+      Object {
+        "a": "a = 4",
+        "c": 6,
+      },
+      Object {
+        "a": "a = 5",
+        "c": 5,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should fetch and filter csv data 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should fetch, filter, map, and sort csv data 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 4,
+        "b": 2,
+        "computed": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+        "computed": 7,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+        "computed": 8,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+        "computed": 9,
+      },
+      Object {
+        "a": 0,
+        "b": 10,
+        "computed": 10,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should match csv data with macro 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should normalize csv with macro 1`] = `
+Array [
+  Object {
+    "group": Object {
+      "type": "b",
+    },
+    "values": Array [
+      Object {
+        "x": 2000,
+        "y": 0,
+      },
+      Object {
+        "x": 2001,
+        "y": 1,
+      },
+      Object {
+        "x": 2002,
+        "y": 2,
+      },
+      Object {
+        "x": 2003,
+        "y": 3,
+      },
+      Object {
+        "x": 2004,
+        "y": 4,
+      },
+      Object {
+        "x": 2005,
+        "y": 5,
+      },
+      Object {
+        "x": 2006,
+        "y": 6,
+      },
+      Object {
+        "x": 2007,
+        "y": 7,
+      },
+      Object {
+        "x": 2008,
+        "y": 8,
+      },
+      Object {
+        "x": 2009,
+        "y": 9,
+      },
+      Object {
+        "x": 2010,
+        "y": 10,
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "type": "c",
+    },
+    "values": Array [
+      Object {
+        "x": 2000,
+        "y": 0,
+      },
+      Object {
+        "x": 2001,
+        "y": 0.1,
+      },
+      Object {
+        "x": 2002,
+        "y": 0.2,
+      },
+      Object {
+        "x": 2003,
+        "y": 0.3,
+      },
+      Object {
+        "x": 2004,
+        "y": 0.4,
+      },
+      Object {
+        "x": 2005,
+        "y": 0.5,
+      },
+      Object {
+        "x": 2006,
+        "y": 0.6,
+      },
+      Object {
+        "x": 2007,
+        "y": 0.7,
+      },
+      Object {
+        "x": 2008,
+        "y": 0.8,
+      },
+      Object {
+        "x": 2009,
+        "y": 0.9,
+      },
+      Object {
+        "x": 2010,
+        "y": 1,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should select csv data with macro 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "A": 0,
+        "B": 10,
+      },
+      Object {
+        "A": 1,
+        "B": 8,
+      },
+      Object {
+        "A": 2,
+        "B": 6,
+      },
+      Object {
+        "A": 3,
+        "B": 4,
+      },
+      Object {
+        "A": 4,
+        "B": 2,
+      },
+      Object {
+        "A": 5,
+        "B": 0,
+      },
+    ],
+  },
+]
+`;
+
+exports[`should work with multiple csv 1`] = `
+Array [
+  Object {
+    "group": Object {
+      "from": "data/a.csv",
+    },
+    "values": Array [
+      Object {
+        "a": 2000,
+        "b": 0,
+        "c": 0,
+        "d": "A",
+        "e": true,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2001,
+        "b": 1,
+        "c": 0.1,
+        "d": "B",
+        "e": false,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2002,
+        "b": 2,
+        "c": 0.2,
+        "d": "C",
+        "e": true,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2003,
+        "b": 3,
+        "c": 0.3,
+        "d": "D",
+        "e": false,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2004,
+        "b": 4,
+        "c": 0.4,
+        "d": "E",
+        "e": true,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2005,
+        "b": 5,
+        "c": 0.5,
+        "d": "F",
+        "e": false,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2006,
+        "b": 6,
+        "c": 0.6,
+        "d": "G",
+        "e": true,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2007,
+        "b": 7,
+        "c": 0.7,
+        "d": "H",
+        "e": false,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2008,
+        "b": 8,
+        "c": 0.8,
+        "d": "I",
+        "e": true,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2009,
+        "b": 9,
+        "c": 0.9,
+        "d": "J",
+        "e": false,
+        "from": "data/a.csv",
+      },
+      Object {
+        "a": 2010,
+        "b": 10,
+        "c": 1,
+        "d": "K",
+        "e": true,
+        "from": "data/a.csv",
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "from": "data/b.csv",
+    },
+    "values": Array [
+      Object {
+        "a": 2000,
+        "b": 0,
+        "c": 0,
+        "d": "A",
+        "e": true,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2001,
+        "b": 1,
+        "c": 0.1,
+        "d": "B",
+        "e": false,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2002,
+        "b": 2,
+        "c": 0.2,
+        "d": "C",
+        "e": true,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2003,
+        "b": 3,
+        "c": 0.3,
+        "d": "D",
+        "e": false,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2004,
+        "b": 4,
+        "c": 0.4,
+        "d": "E",
+        "e": true,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2005,
+        "b": 5,
+        "c": 0.5,
+        "d": "F",
+        "e": false,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2006,
+        "b": 6,
+        "c": 0.6,
+        "d": "G",
+        "e": true,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2007,
+        "b": 7,
+        "c": 0.7,
+        "d": "H",
+        "e": false,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2008,
+        "b": 8,
+        "c": 0.8,
+        "d": "I",
+        "e": true,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2009,
+        "b": 9,
+        "c": 0.9,
+        "d": "J",
+        "e": false,
+        "from": "data/b.csv",
+      },
+      Object {
+        "a": 2010,
+        "b": 10,
+        "c": 1,
+        "d": "K",
+        "e": true,
+        "from": "data/b.csv",
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "from": "data/c.csv",
+    },
+    "values": Array [
+      Object {
+        "a": 2000,
+        "b": 0,
+        "c": 0,
+        "d": "A",
+        "e": true,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2001,
+        "b": 1,
+        "c": 0.1,
+        "d": "B",
+        "e": false,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2002,
+        "b": 2,
+        "c": 0.2,
+        "d": "C",
+        "e": true,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2003,
+        "b": 3,
+        "c": 0.3,
+        "d": "D",
+        "e": false,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2004,
+        "b": 4,
+        "c": 0.4,
+        "d": "E",
+        "e": true,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2005,
+        "b": 5,
+        "c": 0.5,
+        "d": "F",
+        "e": false,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2006,
+        "b": 6,
+        "c": 0.6,
+        "d": "G",
+        "e": true,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2007,
+        "b": 7,
+        "c": 0.7,
+        "d": "H",
+        "e": false,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2008,
+        "b": 8,
+        "c": 0.8,
+        "d": "I",
+        "e": true,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2009,
+        "b": 9,
+        "c": 0.9,
+        "d": "J",
+        "e": false,
+        "from": "data/c.csv",
+      },
+      Object {
+        "a": 2010,
+        "b": 10,
+        "c": 1,
+        "d": "K",
+        "e": true,
+        "from": "data/c.csv",
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "from": "data/d.csv",
+    },
+    "values": Array [
+      Object {
+        "a": 2000,
+        "b": 0,
+        "c": 0,
+        "d": "A",
+        "e": true,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2001,
+        "b": 1,
+        "c": 0.1,
+        "d": "B",
+        "e": false,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2002,
+        "b": 2,
+        "c": 0.2,
+        "d": "C",
+        "e": true,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2003,
+        "b": 3,
+        "c": 0.3,
+        "d": "D",
+        "e": false,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2004,
+        "b": 4,
+        "c": 0.4,
+        "d": "E",
+        "e": true,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2005,
+        "b": 5,
+        "c": 0.5,
+        "d": "F",
+        "e": false,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2006,
+        "b": 6,
+        "c": 0.6,
+        "d": "G",
+        "e": true,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2007,
+        "b": 7,
+        "c": 0.7,
+        "d": "H",
+        "e": false,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2008,
+        "b": 8,
+        "c": 0.8,
+        "d": "I",
+        "e": true,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2009,
+        "b": 9,
+        "c": 0.9,
+        "d": "J",
+        "e": false,
+        "from": "data/d.csv",
+      },
+      Object {
+        "a": 2010,
+        "b": 10,
+        "c": 1,
+        "d": "K",
+        "e": true,
+        "from": "data/d.csv",
+      },
+    ],
+  },
+  Object {
+    "group": Object {
+      "from": "data/e.csv",
+    },
+    "values": Array [
+      Object {
+        "a": 2000,
+        "b": 0,
+        "c": 0,
+        "d": "A",
+        "e": true,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2001,
+        "b": 1,
+        "c": 0.1,
+        "d": "B",
+        "e": false,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2002,
+        "b": 2,
+        "c": 0.2,
+        "d": "C",
+        "e": true,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2003,
+        "b": 3,
+        "c": 0.3,
+        "d": "D",
+        "e": false,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2004,
+        "b": 4,
+        "c": 0.4,
+        "d": "E",
+        "e": true,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2005,
+        "b": 5,
+        "c": 0.5,
+        "d": "F",
+        "e": false,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2006,
+        "b": 6,
+        "c": 0.6,
+        "d": "G",
+        "e": true,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2007,
+        "b": 7,
+        "c": 0.7,
+        "d": "H",
+        "e": false,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2008,
+        "b": 8,
+        "c": 0.8,
+        "d": "I",
+        "e": true,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2009,
+        "b": 9,
+        "c": 0.9,
+        "d": "J",
+        "e": false,
+        "from": "data/e.csv",
+      },
+      Object {
+        "a": 2010,
+        "b": 10,
+        "c": 1,
+        "d": "K",
+        "e": true,
+        "from": "data/e.csv",
+      },
+    ],
+  },
+]
+`;

@@ -2,42 +2,41 @@
   "name": "data-manager",
   "version": "0.8.0",
   "description": "Advanced querying and processing for csv data",
-  "main": "data-manager.js",
-  "scripts": {
-    "build": "grunt uglify",
-    "test": "grunt jshint && grunt test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/CSNW/DataManager.git"
-  },
+  "repository": "github:CSNW/data-manager",
+  "license": "MIT",
+  "homepage": "https://github.com/CSNW/data-manager",
+  "author": "Tim Hall <tim.hall@cornerstonenw.com>",
   "keywords": [
-    "DataManager",
-    "data",
-    "manager",
-    "store",
+    "csv",
     "query",
+    "process",
+    "data-manager",
     "d3"
   ],
-  "author": "CSNW",
-  "bugs": {
-    "url": "https://github.com/CSNW/DataManager/issues"
+  "main": "dist/data-manager.js",
+  "module": "src/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup -c",
+    "pretest": "npm run build",
+    "test": "jest"
   },
-  "homepage": "https://github.com/CSNW/DataManager",
-  "license": "MIT",
   "dependencies": {
-    "d3": "^3",
-    "rsvp": "^3",
-    "lodash": "^3"
+    "babel-plugin-macros": "^2.2.2",
+    "d3-fetch": "^1.1.0"
   },
   "devDependencies": {
-    "grunt": "^1",
-    "grunt-cli": "^1",
-    "grunt-contrib-connect": "^1",
-    "grunt-contrib-jasmine": "^1",
-    "grunt-contrib-jshint": "^1",
-    "grunt-contrib-uglify-es": "^3",
-    "grunt-contrib-watch": "^1",
-    "load-grunt-tasks": "^3"
+    "@babel/core": "^7.0.0-beta.51",
+    "@babel/preset-env": "^7.0.0-beta.51",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.0.1",
+    "babel-plugin-tester": "^5.4.0",
+    "benchmark": "^2.1.4",
+    "d3-dsv": "^1.0.8",
+    "file-url": "^2.0.2",
+    "jest": "^23.1.0",
+    "node-fetch": "^2.1.2",
+    "rollup": "^0.60.7",
+    "rollup-plugin-filesize": "^2.0.0"
   }
 }

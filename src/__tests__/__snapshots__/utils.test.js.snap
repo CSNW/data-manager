@@ -1,0 +1,94 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`compare should sort numbers ascending 1`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+  5,
+]
+`;
+
+exports[`compare should sort numbers ascending 2`] = `
+Array [
+  1,
+  2,
+  3,
+  4,
+  5,
+]
+`;
+
+exports[`compare should sort numbers descending 1`] = `
+Array [
+  5,
+  4,
+  3,
+  2,
+  1,
+]
+`;
+
+exports[`compare should sort numbers descending 2`] = `
+Array [
+  5,
+  4,
+  3,
+  2,
+  1,
+]
+`;
+
+exports[`mapValues should map series values 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+  Object {
+    "values": Array [
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;

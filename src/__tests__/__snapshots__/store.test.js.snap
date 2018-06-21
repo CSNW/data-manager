@@ -1,0 +1,170 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should fetch if table has not been loaded 1`] = `
+Array [
+  Object {
+    "a": 0,
+    "b": 10,
+  },
+  Object {
+    "a": 1,
+    "b": 8,
+  },
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+]
+`;
+
+exports[`should filter with convert 1`] = `
+Array [
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+]
+`;
+
+exports[`should flatMap and filter with convert 1`] = `
+Array [
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+]
+`;
+
+exports[`should flatMap with convert 1`] = `
+Array [
+  Object {
+    "a": 0,
+    "b": 10,
+  },
+  Object {
+    "a": 0,
+    "b": 10,
+  },
+  Object {
+    "a": 1,
+    "b": 8,
+  },
+  Object {
+    "a": 1,
+    "b": 8,
+  },
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+]
+`;
+
+exports[`should resolve already loaded table 1`] = `
+Array [
+  Object {
+    "a": 0,
+    "b": 10,
+  },
+  Object {
+    "a": 1,
+    "b": 8,
+  },
+  Object {
+    "a": 2,
+    "b": 6,
+  },
+  Object {
+    "a": 3,
+    "b": 4,
+  },
+  Object {
+    "a": 4,
+    "b": 2,
+  },
+  Object {
+    "a": 5,
+    "b": 0,
+  },
+]
+`;

@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should fetch values 1`] = `
+Array [
+  Object {
+    "values": Array [
+      Object {
+        "a": 0,
+        "b": 10,
+      },
+      Object {
+        "a": 1,
+        "b": 8,
+      },
+      Object {
+        "a": 2,
+        "b": 6,
+      },
+      Object {
+        "a": 3,
+        "b": 4,
+      },
+      Object {
+        "a": 4,
+        "b": 2,
+      },
+      Object {
+        "a": 5,
+        "b": 0,
+      },
+    ],
+  },
+]
+`;
