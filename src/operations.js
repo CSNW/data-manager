@@ -42,11 +42,7 @@ export function mapSeries(iterator) {
  * @returns {function} operation
  */
 export function flatMap(iterator) {
-  return data =>
-    data.map(series => {
-      series.values = _flatMap(series.values, iterator);
-      return series;
-    });
+  return data => mapValues(data, values => _flatMap(values, iterator));
 }
 
 /**

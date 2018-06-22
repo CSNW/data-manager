@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>data-manager Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  </head>
+  <body>
+    <!-- For IE11, include Promise and fetch polyfills -->
+    <script src="node_modules/promise-polyfill/dist/polyfill.min.js"></script>
+    <script src="node_modules/whatwg-fetch/fetch.js"></script>
+    
+    <!-- Include dependencies: d3-fetch (and d3-dsv) -->
+    <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
+    <script src="https://d3js.org/d3-fetch.v1.min.js"></script>
+
+    <!-- Include data-manager -->
+    <script src="dist/data-manager.umd.min.js"></script>
+    <script type="text/javascript">
+      var store = new DataManager.Store();
+      var table = DataManager.table('tests/__fixtures__/data/a.csv', function(row) {
+        return {
+          a: Number(row.a),
+          b: Number(row.b),
+          c: Number(row.c),
+          d: row.d,
+          e: row.e === true
+        };
+      });
+
+      store.query(
+        table,
+        DataManager.filter(function(row) { return row.a >= 2005; }),
+        DataManager.map(function(row) {
+          return {
+            x: row.a,
+            y: row.b
+          };
+        })
+      ).then(function(results) {
+        console.log('results', results[0].values);
+      })
+    </script>
+  </body>
+</html>

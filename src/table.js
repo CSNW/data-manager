@@ -3,7 +3,7 @@
  *
  * - On first load, it will fetch, convert, and cache csv
  * - On subsequent loads, will load directly from cache
- * - `convert` performs filter and map, return `null` or `undefined` to filter row
+ * - `convert` performs flatMap and filter, return `null` or `undefined` to filter row
  *
  * @example
  * ```js
