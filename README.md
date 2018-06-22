@@ -363,6 +363,42 @@ async function subset() {
 }
 ```
 
+### normalize
+
+`normalize` is a more advanced version of `select` that allows normalizing csv data, rearranging fields into a shared set of columns.
+This can be useful for grouping by field within a single query.
+
+```js
+import { table, flow } from 'data-manager';
+import cast from 'data-manager/cast.macro';
+import normalize from 'data-manager/normalize.macro';
+
+// Given:
+// year, a, b, c
+// 1990, 1, 2, 3
+// 1991, 2, 4, 6
+// ...
+
+const data = table('data.csv', flow(
+  cast({ year: Number, a: Number, b: Number, c: Number }),
+  normalize({
+    x: 'year',
+    y: {
+      columns: ['a', 'b', 'c'],
+      category: 'type'
+    }
+  })
+));
+
+// Normalizes into:
+// x,    y, type
+// 1990, 1, 'a'
+// 1990, 2, 'b'
+// 1990, 3, 'c'
+// 1991, 2, 'a'
+// ...
+```
+
 ## Upgrading from v0.8.0
 
 Before:
