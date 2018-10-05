@@ -47,7 +47,7 @@ const min = 0;
 const max = 100;
 const values = [1, 2, 3];
 filter(row => {
-  return row.a === 1 && row.b === 2 && row['c'] !== true && row.d > 0 && row.d < 100 && row.e >= min && row.e <= max && [1, 2, 3].includes(row['f']) && !values.includes(row.g);
+  return row.a === 1 && row.b === 2 && row['c'] !== true && row.d > 0 && row.d < 100 && row.e >= min && row.e <= max && [1, 2, 3].indexOf(row['f']) >= 0 && !(values.indexOf(row.g) >= 0);
 });
 "
 `;

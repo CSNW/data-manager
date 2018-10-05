@@ -21,7 +21,7 @@ module.exports = createMacro(match);
  * // transforms at build-time into:
  *
  * filter(function match(row) {
- *   return row.a === 10 && (row.b < 0 || row.b > 100) && [1, 2, 3].includes(row.c)
+ *   return row.a === 10 && (row.b < 0 || row.b > 100) && [1, 2, 3].indexOf(row.c) >= 0
  * })
  * ```
  * @param {object} query
@@ -109,9 +109,12 @@ const comparison = {
     return t.binaryExpression('<=', row(key, t), value);
   },
   $in(key, value, t) {
-    return t.callExpression(
-      t.memberExpression(value, t.identifier('includes')),
-      [row(key, t)]
+    return t.binaryExpression(
+      '>=',
+      t.callExpression(t.memberExpression(value, t.identifier('indexOf')), [
+        row(key, t)
+      ]),
+      t.numericLiteral(0)
     );
   },
   $nin(key, value, t) {
