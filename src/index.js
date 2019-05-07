@@ -3,6 +3,7 @@ export { default as table } from './table';
 export {
   filter,
   map,
+  mapSeries,
   flatMap,
   sort,
   sortBy,
