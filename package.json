@@ -15,34 +15,34 @@
   ],
   "main": "dist/data-manager.umd.js",
   "module": "src/index.js",
+  "browser": "dist/data-manager.umd.min.js",
   "sideEffects": false,
   "scripts": {
     "build": "rollup -c",
     "pretest": "npm run build",
     "test": "jest",
-    "example": "serve ."
+    "example": "serve .",
+    "benchmark": "node tests/benchmark"
   },
   "dependencies": {
-    "babel-plugin-macros": "^2.2.2",
-    "d3-fetch": "^1.1.0"
+    "babel-plugin-macros": "^2.5.1",
+    "d3-fetch": "^1.1.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.51",
-    "@babel/preset-env": "^7.0.0-beta.51",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^23.0.1",
-    "babel-plugin-tester": "^5.4.0",
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "babel-plugin-tester": "^6.1.0",
     "benchmark": "^2.1.4",
-    "d3-dsv": "^1.0.8",
+    "d3-dsv": "^1.1.1",
     "file-url": "^2.0.2",
-    "jest": "^23.1.0",
-    "node-fetch": "^2.1.2",
-    "promise-polyfill": "^8.0.0",
-    "rollup": "^0.60.7",
-    "rollup-plugin-buble": "^0.19.2",
-    "rollup-plugin-filesize": "^2.0.0",
-    "rollup-plugin-uglify": "^4.0.0",
-    "serve": "^9.1.0",
+    "jest": "^24.8.0",
+    "node-fetch": "^2.5.0",
+    "promise-polyfill": "^8.1.0",
+    "rollup": "^1.11.3",
+    "rollup-plugin-buble": "^0.19.6",
+    "rollup-plugin-filesize": "^6.0.1",
+    "rollup-plugin-terser": "^4.0.4",
+    "serve": "^11.0.0",
     "whatwg-fetch": "^2.0.4"
   }
 }

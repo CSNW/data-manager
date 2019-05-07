@@ -1,6 +1,6 @@
 import buble from 'rollup-plugin-buble';
-import { uglify } from 'rollup-plugin-uglify';
 import filesize from 'rollup-plugin-filesize';
+import { terser } from 'rollup-plugin-terser';
 import pkg from './package.json';
 
 const banner = `/*!
@@ -27,7 +27,7 @@ export default [
   {
     input: 'src/index.js',
     external: ['d3-fetch'],
-    plugins: [buble(), uglify(), filesize()],
+    plugins: [buble(), terser(), filesize()],
     output: {
       format: 'umd',
       file: 'dist/data-manager.umd.min.js',
