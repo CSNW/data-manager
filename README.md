@@ -104,7 +104,9 @@ async function all() {
     population
   );
 
-  // results = [{ year: ..., population: ..., ... }, ...]
+  // results = [
+  //   { values: [{ year: ..., population: ..., ... }, ...] }
+  // ]
 }
 ```
 
@@ -245,6 +247,24 @@ async function cloned() {
 }
 ```
 
+### from
+
+`from` merges rows from multiple tables into a single series.
+
+```js
+import { /* ... */ from } from 'data-manager';
+
+async function multiple() {
+  const results = await store.query(
+    from(table('a.csv'), table('b.csv'), table('c.cs'))
+  );
+
+  // results = [
+  //   { values: [...from a, b, and c]}
+  // ]
+}
+```
+
 ## Macros
 
 In addition to the table and query operations, there are some convenience macros that are part of data-manager that are compiled at build time (using babel-plugin-macros) into performant functions that rival hand-written code. These methods are optional and are not part of the standard import for data-manager.
@@ -252,11 +272,11 @@ In addition to the table and query operations, there are some convenience macros
 Usage:
 
 1. Add `babel-plugin-macros` as a dev-dependency
-2. Add `"plugins": ["macros"]` to .babelrc (see [macros docs](https://github.com/kentcdodds/babel-plugin-macros/blob/master/other/docs/user.md) for alternatives)
+2. Add `"plugins": ["macros"]` to .babelrc / babel.config.js (see [macros docs](https://github.com/kentcdodds/babel-plugin-macros/blob/master/other/docs/user.md) for alternatives)
 
 ### cast
 
-Cast a row using the given field mapping.
+Cast a row using the given field mapping. For each key-value in the `cast` object, the row's value for the given key is passed through the given function. For values that depend on the entire row rather than a single key can be wrapped in the `derived` helper, which calls the given function with `(row, index, rows)`.
 
 ```js
 import { table } from 'data-manager';
@@ -319,6 +339,24 @@ async function range(start, end) {
 // function match(row) {
 //   return row.year >= 1 && row.year <= 2 && row.state === 'VA'
 // }
+```
+
+For cases where a more complex condition is needed, but the rest can be handled by `match`, the returned function can be used as follows:
+
+```js
+import { /* ... */ filter } from 'data-manager';
+import match from 'data-manager/match.macro';
+
+async function range(start, end) {
+  const inRange = match({
+    year: { $gte: start, $lte: end }
+  })
+
+  const results = await store.query(
+    population,
+    filter(row => inRange(row) && complexLogic(row))
+  );
+}
 ```
 
 ### select
@@ -486,5 +524,8 @@ const results = await store.query(
 
 ## Development
 
-1. Install dependencies: `npm install` / `yarn`
-2. Run tests: `npm test` / `yarn test`
+1. Install: `npm install`
+2. Test: `npm test`
+3. Build: `npm run build`
+4. Version: `npm version VERSION`
+5. Publish: Private at the moment, use `"data-manager": "git+https://github.com/CSNW/data-manager.git#vVERSION"
