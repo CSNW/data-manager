@@ -78,3 +78,103 @@ flatMap(row => {
 });
 "
 `;
+
+exports[`macros 3. macros: 3. macros 1`] = `
+"
+import { flatMap } from 'data-manager';
+import normalize from '../normalize.macro';
+
+const b = 'b';
+const f = 'f';
+
+flatMap(normalize(
+  {
+    a: 'a',
+    b,
+    y: {
+      columns: ['c', 'd'],
+      categories: {
+        c: { isC: true, isD: false },
+        d: { isC: false, isD: true },
+      }
+    }
+  },
+  ['e', f]
+));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { flatMap } from 'data-manager';
+const b = 'b';
+const f = 'f';
+flatMap(row => {
+  return [{
+    a: row['a'],
+    b: row[b],
+    y: row['c'],
+    isC: true,
+    isD: false,
+    'e': row['e'],
+    [f]: row[f]
+  }, {
+    a: row['a'],
+    b: row[b],
+    y: row['d'],
+    isC: false,
+    isD: true,
+    'e': row['e'],
+    [f]: row[f]
+  }];
+});
+"
+`;
+
+exports[`macros 4. macros: 4. macros 1`] = `
+"
+import { flatMap } from 'data-manager';
+import normalize from '../normalize.macro';
+
+const b = 'b';
+const f = 'f';
+
+flatMap(normalize(
+  {
+    a: 'a',
+    b,
+    y: {
+      columns: ['c', 'd'],
+      categories: {
+        c: { isC: true, isD: false },
+        d: { isC: false, isD: true },
+      }
+    }
+  },
+  'e', f
+));
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { flatMap } from 'data-manager';
+const b = 'b';
+const f = 'f';
+flatMap(row => {
+  return [{
+    a: row['a'],
+    b: row[b],
+    y: row['c'],
+    isC: true,
+    isD: false,
+    'e': row['e'],
+    [f]: row[f]
+  }, {
+    a: row['a'],
+    b: row[b],
+    y: row['d'],
+    isC: false,
+    isD: true,
+    'e': row['e'],
+    [f]: row[f]
+  }];
+});
+"
+`;

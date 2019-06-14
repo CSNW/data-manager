@@ -39,6 +39,50 @@ pluginTester({
           }
         }
       }));
+    `,
+    `
+      import { flatMap } from 'data-manager';
+      import normalize from '../normalize.macro';
+
+      const b = 'b';
+      const f = 'f';
+
+      flatMap(normalize(
+        {
+          a: 'a',
+          b,
+          y: {
+            columns: ['c', 'd'],
+            categories: {
+              c: { isC: true, isD: false },
+              d: { isC: false, isD: true },
+            }
+          }
+        },
+        ['e', f]
+      ));
+    `,
+    `
+      import { flatMap } from 'data-manager';
+      import normalize from '../normalize.macro';
+
+      const b = 'b';
+      const f = 'f';
+
+      flatMap(normalize(
+        {
+          a: 'a',
+          b,
+          y: {
+            columns: ['c', 'd'],
+            categories: {
+              c: { isC: true, isD: false },
+              d: { isC: false, isD: true },
+            }
+          }
+        },
+        'e', f
+      ));
     `
   ]
 });

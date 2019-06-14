@@ -41,11 +41,12 @@ module.exports = createMacro(normalize);
  * flatMap(row => {
  *   return [
  *     { x: row['a'], y: row['b'], isB: true, isC: false },
- *     { a: row['a'], y: row['c'], isB: true, isC: false }
+ *     { x: row['a'], y: row['c'], isB: false, isC: true }
  *   ];
  * });
  * ```
  * @param {object} mapping fields to normalize / select
+ * @param {...string} [passthrough]
  * @returns {function}
  */
 function normalize({ references, state, babel: { template, types: t } }) {
@@ -59,6 +60,7 @@ function normalize({ references, state, babel: { template, types: t } }) {
   for (const identifier_path of paths) {
     const section_path = identifier_path.parentPath;
     const mapping = section_path.get('arguments.0').node;
+    const passthrough = section_path.get('arguments.1');
 
     const rows = mapping.properties.reduce(
       (rows, property) => {
@@ -120,6 +122,20 @@ function normalize({ references, state, babel: { template, types: t } }) {
       },
       [[]]
     );
+
+    if (passthrough) {
+      const elements = t.isArrayExpression(passthrough.node)
+        ? passthrough.node.elements
+        : section_path.node.arguments.slice(1);
+
+      elements.forEach(element => {
+        const computed = !t.isStringLiteral(element);
+
+        rows.forEach(row => {
+          row.push(t.objectProperty(element, toRow(element), computed));
+        });
+      });
+    }
 
     const NORMALIZE = t.arrayExpression(
       rows.map(row => t.objectExpression(row))
