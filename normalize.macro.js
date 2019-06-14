@@ -130,7 +130,6 @@ function normalize({ references, state, babel: { template, types: t } }) {
   }
 
   function toRow(key) {
-    const id = t.isIdentifier(key) ? t.stringLiteral(key.name) : key;
     return t.memberExpression(t.identifier('row'), key, true);
   }
 

@@ -265,6 +265,45 @@ async function multiple() {
 }
 ```
 
+### flow
+
+Compose the given functions, calling them from first to last and passing the results into each subsequent function.
+
+```js
+import { flow } from 'data-manager';
+
+const process = flow(a, b, c);
+
+// Equivalent to:
+//
+// const process = input => c(b(a(input)))
+```
+
+## Custom Operations
+
+Each operation takes in the result of the previous operation, acts on it, and returns a result that is passed to the next operation. In general, the input and output should be a `data` array of series with rows stored in a `values` array. If a `Promise` is returned from an operation, the query waits until it is resolved before starting the next operation with the resulting value.   
+
+```js
+async function addComputedValue(data) {
+  return await Promise.all(
+    data.map(async series => {
+      await Promise.all(
+        series.values.map(async row => {
+          row.computed = await compute(row.value);
+        })
+      );
+    })
+  );
+}
+
+async function computed() {
+  const result = await store.query(
+    table('values.csv'),
+    addComputedValue
+  );
+}
+```
+
 ## Macros
 
 In addition to the table and query operations, there are some convenience macros that are part of data-manager that are compiled at build time (using babel-plugin-macros) into performant functions that rival hand-written code. These methods are optional and are not part of the standard import for data-manager.
