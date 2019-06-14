@@ -80,3 +80,21 @@ filter(row => {
 });
 "
 `;
+
+exports[`macros 4. macros: 4. macros 1`] = `
+"
+import { filter } from 'data-manager';
+import match from '../match.macro';
+
+filter(match({
+  
+}))
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { filter } from 'data-manager';
+filter(row => {
+  return true;
+});
+"
+`;

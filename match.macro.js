@@ -41,7 +41,9 @@ function match({ references, state, babel: { template, types: t } }) {
     const properties = conditions.node.properties;
 
     // Create match logic
-    const LOGIC = logical.$and(undefined, properties, t);
+    const LOGIC = properties.length
+      ? logical.$and(undefined, properties, t)
+      : t.booleanLiteral(true);
 
     const match = buildMatch({ LOGIC });
     section_path.replaceWith(match);

@@ -50,6 +50,14 @@ pluginTester({
         $not: { a: 1, b: 2 },
         $nor: { a: { $gt: 1 }, b: { $lt: 1 } }
       }))
+    `,
+    `
+      import { filter } from 'data-manager';
+      import match from '../match.macro';
+
+      filter(match({
+        
+      }))
     `
   ]
 });
