@@ -599,5 +599,5 @@ const results = await store.query(
 1. Install: `npm install`
 2. Test: `npm test`
 3. Build: `npm run build`
-4. Version: `npm version VERSION`
+4. Version: `npm version VERSION`, `git push`, and `git push --tags`
 5. Publish: Private at the moment, use `"data-manager": "git+https://github.com/CSNW/data-manager.git#vVERSION"
