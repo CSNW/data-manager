@@ -441,7 +441,7 @@
             reduce: {
               iterator: function(memo, row) {
                 memo.y += row.y;
-                if (!_.contains(memo.types, row.type)) {
+                if (!_.includes(memo.types, row.type)) {
                   memo.types.push(row.type);
                 }
 

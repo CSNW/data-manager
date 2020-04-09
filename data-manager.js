@@ -304,7 +304,7 @@
         }
 
         return cache.loading;
-      }, this);
+      }.bind(this));
 
       return RSVP.all(loading)
         .then(function() {
@@ -431,7 +431,7 @@
         .from(query.from)
         ._then(function(data) {
           // Return merged rows
-          return _.flatten(_.pluck(_.values(data), 'values'));
+          return _.flatten(_.map(_.values(data), 'values'));
         })
         .preprocess(query.preprocess)
         .filter(query.filter)
@@ -522,7 +522,7 @@
             predicate = [predicate];
           }
           if (_.isArray(predicate)) {
-            predicate = _.object(predicate, _.map(predicate, function(key) {
+            predicate = _.zipObject(predicate, _.map(predicate, function(key) {
               return function(row) {
                 return row[key];
               };
@@ -540,7 +540,7 @@
           _.each(rows, function(row, index, rows) {
             var key = utils.quickKey(row, keys, values);
             if (!meta[key]) {
-              meta[key] = _.object(keys, _.map(keys, function(key, index) {
+              meta[key] = _.zipObject(keys, _.map(keys, function(key, index) {
                 return values[index](row);
               }));
 

@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       options: {
         specs: ['specs/**/*.spec.js'],
         vendor: [
-          'node_modules/lodash/index.js',
+          'node_modules/lodash/lodash.js',
           'node_modules/rsvp/dist/rsvp.js',
           'node_modules/d3/d3.js'
         ]

@@ -27,14 +27,14 @@
   "license": "MIT",
   "dependencies": {
     "d3": "^3",
-    "rsvp": "^3",
-    "lodash": "^3"
+    "lodash": "^4.17.15",
+    "rsvp": "^3"
   },
   "devDependencies": {
     "grunt": "^1",
     "grunt-cli": "^1",
     "grunt-contrib-connect": "^1",
-    "grunt-contrib-jasmine": "^1",
+    "grunt-contrib-jasmine": "^2.1.0",
     "grunt-contrib-jshint": "^1",
     "grunt-contrib-uglify-es": "^3",
     "grunt-contrib-watch": "^1",
