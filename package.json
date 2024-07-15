@@ -31,7 +31,7 @@
   "devDependencies": {
     "@babel/core": "^7",
     "@babel/preset-env": "^7",
-    "babel-plugin-tester": "^6",
+    "babel-plugin-tester": "^6.2.1",
     "benchmark": "^2",
     "d3-dsv": "^1",
     "file-url": "^2",
@@ -40,7 +40,7 @@
     "promise-polyfill": "^8",
     "rollup": "^1",
     "rollup-plugin-buble": "^0.19",
-    "rollup-plugin-filesize": "^6",
+    "rollup-plugin-filesize": "^6.2.1",
     "rollup-plugin-terser": "^5",
     "serve": "^11",
     "whatwg-fetch": "^2"
